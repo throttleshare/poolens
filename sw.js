@@ -1,4 +1,4 @@
-const CACHE = 'poolens-v3';
+const CACHE = 'poolens-v4';
 const ASSETS = ['/', '/index.html', '/js/errors.js', '/js/data.js', '/js/app.js', '/favicon.svg'];
 
 self.addEventListener('install', e => {

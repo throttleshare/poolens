@@ -383,5 +383,187 @@ window.ERROR_DB = {
         ]
       }
     }
+  },
+
+  beatbot: {
+    label: "Beatbot",
+    color: "#f59e0b",
+    categories: {
+      "Beatbot Robot Cleaners": {
+        models:["AquaSense","AquaSense 2","AquaSense Pro","AquaSense S2","iSkim Ultra"],
+        note:"Beatbot robots use LED indicator patterns for physical units; app-connected models (AquaSense Pro, AquaSense S2) also show alphanumeric error codes in the Beatbot app.",
+        codes:[
+          { code:"LED: Solid Red", name:"Motor Blocked / Impeller Jam",
+            causes:["Debris wrapped around impeller or brushes","Drive wheel obstructed","Robot caught on drain cover or obstacle"],
+            fix:["Remove robot from pool immediately","Clear all debris from impeller, brushes, and drive wheels","Check suction inlet for blockage","Reset by unplugging for 30 seconds and restarting","If impeller is visibly jammed, gently rotate by hand to free"],
+            severity:"high", callpro:false },
+          { code:"LED: Blinking Red", name:"Cliff Detection or Water Entry Error",
+            causes:["Robot detected pool edge, stairs, or abrupt ledge","Water ingress into electronics compartment (waterproofing breach)","Cliff sensor dirty or obscured"],
+            fix:["Place robot on flat pool floor away from steps or ledges","Clean cliff detection sensors on underside with soft cloth","Inspect seals and gaskets for damage if water ingress is suspected","Do not run robot on pools with steep or non-standard geometry without checking compatibility"],
+            severity:"medium", callpro:false },
+          { code:"LED: Red + White alternating", name:"Low Battery / Charging Error",
+            causes:["Battery charge critically low","Charging contacts corroded or misaligned","Charging cable or power supply fault","Battery aged or capacity degraded"],
+            fix:["Return robot to charging dock immediately","Clean charging contacts on both robot and dock with dry cloth","Ensure robot is fully seated on dock","Inspect charging cable for damage","If battery will not charge after 4 hours, battery replacement may be needed"],
+            severity:"medium", callpro:false },
+          { code:"No power / won't start", name:"No Power",
+            causes:["GFCI outlet tripped","Power supply failed","Float cable damaged","Charging dock fault","Battery fully depleted (not charged before first use)"],
+            fix:["Press reset button on GFCI outlet and test outlet with another device","Inspect float cable for cuts or pinches","Verify power supply output with multimeter if available","Charge robot fully before first use (4+ hours)","Try a different outlet on a different circuit"],
+            severity:"high", callpro:false },
+          { code:"E01", name:"Brush Motor Overload",
+            causes:["Brush roller jammed with hair, string, or debris","Brush roller bearing worn or seized","Brush drive belt broken or slipped"],
+            fix:["Remove robot and clear all debris from brush roller","Check brush roller for free rotation — it should spin easily by hand","Inspect brush drive belt condition and seating","Reset via app: Settings > Reset Robot, or unplug for 60 seconds"],
+            severity:"medium", callpro:false },
+          { code:"E02", name:"Drive Motor Fault",
+            causes:["Drive motor overheated","Debris jammed in drive wheel or track","Drive motor bearing failure","Internal drive board fault"],
+            fix:["Remove robot from pool and let cool 20 minutes","Clear all debris from drive wheels and tracks","Attempt restart — if E02 returns immediately, drive motor or board needs service","Contact Beatbot support — drive motor replacement is typically required"],
+            severity:"high", callpro:true },
+          { code:"E03", name:"Pump Motor Fault",
+            causes:["Suction impeller blocked (leaves, large debris)","Pump motor overload from running dry","Internal pump fault"],
+            fix:["Remove and clean debris tray and suction inlet thoroughly","Check impeller for obstruction — clear any blockage","Do not run robot outside of water (pump runs dry and overheats)","If E03 returns after cleaning, pump motor service needed"],
+            severity:"high", callpro:true },
+          { code:"E05", name:"Charging Fault",
+            causes:["Charging dock contacts corroded or bent","Power supply output out of spec","Battery management system (BMS) fault","Ambient temperature too cold for charging (<40°F)"],
+            fix:["Clean charging contacts with isopropyl alcohol","Allow robot to warm to room temperature before charging if stored in cold","Test with a known-good power supply","If charging fault persists after contact cleaning: contact Beatbot support for BMS evaluation"],
+            severity:"medium", callpro:false },
+          { code:"E07", name:"Communication Loss (Wi-Fi / App Disconnected)",
+            causes:["Wi-Fi network changed (SSID or password)","Robot out of Wi-Fi range during setup","App needs update","Router firewall blocking device communication","Robot firmware needs update"],
+            fix:["Re-pair robot via Beatbot app: Settings > Add Device","Ensure 2.4 GHz Wi-Fi band is available (not 5 GHz only)","Update Beatbot app to latest version","Move router closer or add Wi-Fi extender near pool area","Check that router is not blocking local device communication"],
+            severity:"low", callpro:false },
+          { code:"LED: Solid Blue", name:"Normal Operation",
+            causes:["Robot is running a cleaning cycle normally"],
+            fix:["No action needed — robot is operating correctly"],
+            severity:"low", callpro:false },
+          { code:"LED: Blinking Blue", name:"Cycle Complete",
+            causes:["Cleaning cycle has finished — normal end-of-cycle indicator"],
+            fix:["Remove robot from pool","Open debris tray and empty collected debris","Rinse filter and tray with garden hose","Allow robot to dry before next use or storage"],
+            severity:"low", callpro:false },
+          { code:"App: Filter Full", name:"Debris Tray Full",
+            causes:["Debris collection tray capacity reached","Heavy leaf or debris load in pool","Filter screen clogged reducing suction"],
+            fix:["Remove robot from pool","Open debris tray door and empty all collected debris","Rinse tray and filter screen with hose until water runs clear","Reinstall tray and restart cycle"],
+            severity:"low", callpro:false }
+        ]
+      }
+    }
+  },
+
+  betta: {
+    label: "Betta (BWT)",
+    color: "#10b981",
+    categories: {
+      "Betta Robot Cleaners": {
+        models:["Betta SE","Betta 2","Betta SE2","Betta Plus","Betta Cleaner"],
+        note:"Betta robots (manufactured by Hammer / distributed under BWT brand) use LED indicator patterns and an audible buzzer. Most models are cordless with solar-assist charging. Betta SE and SE2 are surface skimmers; Betta Cleaner is a full in-pool robot.",
+        codes:[
+          { code:"LED: Blinking Red", name:"Low Battery — Charge Immediately",
+            causes:["Battery charge level critically low","Robot has been running longer than battery capacity","Solar charge insufficient to maintain level (heavy cloud cover or shadowed pool)"],
+            fix:["Remove robot from pool","Place on charging dock or connect charging cable","Allow minimum 4–6 hours charge before next use","Ensure solar panel is clean and unobstructed for solar-assist models"],
+            severity:"medium", callpro:false },
+          { code:"LED: Solid Red", name:"Drive Fault / Obstacle Stuck",
+            causes:["Drive wheel or track jammed by debris","Robot wedged against wall, step, or drain cover","Drive motor stalled"],
+            fix:["Remove robot from pool","Clear any debris from drive wheels, tracks, and undercarriage","Check that all wheels spin freely by hand","Reset by holding power button 5 seconds","Inspect pool for objects that could trap the robot"],
+            severity:"high", callpro:false },
+          { code:"LED: Red (3 blinks)", name:"Brush Blocked or Jammed",
+            causes:["Hair, string, or fibrous debris wrapped around brush roller","Brush roller bearing worn","Brush drive mechanism fault"],
+            fix:["Remove robot and cut away any wrapped hair or string with scissors","Spin brush roller manually — it should rotate freely","Clean brush roller housing and end caps","Replace brush roller if bearing is seized or bristles are heavily worn"],
+            severity:"medium", callpro:false },
+          { code:"Buzzer + Red LED", name:"Water Entry Alarm",
+            causes:["Water has entered the electronics compartment","Seal or gasket damaged or displaced","Robot dropped or impacted before water entry"],
+            fix:["Remove robot from pool immediately","Do NOT plug in or charge until fully dry","Allow robot to air-dry completely (24-48 hours minimum)","Inspect all seals, gaskets, and housing for cracks or damage","Contact Betta/BWT support — electronics water exposure may require professional service"],
+            severity:"high", callpro:true },
+          { code:"No power after full charge", name:"Battery or Charging Contact Issue",
+            causes:["Battery has reached end of service life (typically 2–3 years)","Charging contacts on robot or dock are corroded or oxidized","Internal battery connection loose"],
+            fix:["Clean charging contacts with fine sandpaper or isopropyl alcohol","Test with a different charging cable if available","If robot is 2+ years old and charge does not hold, battery replacement is likely needed","Contact Betta/BWT support for battery service options"],
+            severity:"medium", callpro:false },
+          { code:"Robot circles without moving forward", name:"Wheel / Track Slip or Brush Jam",
+            causes:["One drive wheel or track has more resistance than the other (asymmetric drag)","Brush jam causing rotational bias","Track or wheel worn, cracked, or delaminated"],
+            fix:["Remove robot and inspect both drive wheels/tracks for debris or damage","Clean and lubricate track joints if applicable","Check that brush roller spins freely — a jammed brush pulls the robot sideways","Replace worn or cracked tracks/wheels if found","Test on a flat surface out of water to isolate which side is dragging"],
+            severity:"medium", callpro:false },
+          { code:"Robot stays in corner", name:"Navigation Sensor Dirty or Blocked",
+            causes:["Cliff or wall detection sensor covered in algae, debris, or scale","Sensor lens scratched or cloudy","Pool surface highly reflective (light-colored plaster) confusing sensors"],
+            fix:["Remove robot and clean all sensors on underside and sides with soft damp cloth","Do not use abrasive cleaners on sensor lenses","Check that sensor ports are not blocked by debris buildup","If pool surface is very light-colored, check Betta compatibility documentation for reflective surfaces"],
+            severity:"low", callpro:false },
+          { code:"Solar charge not working", name:"Solar Panel Issue",
+            causes:["Solar panel surface dirty, coated with sunscreen film, or covered by debris","Insufficient sunlight — overcast conditions, pool fully shaded","Panel or internal solar charge controller fault"],
+            fix:["Clean solar panel with damp cloth — sunscreen and dust significantly reduce output","Position robot in direct sunlight for at least 3–4 hours for meaningful charge","Solar assist supplements but does not fully replace dock charging in low-light conditions","If panel is clean and conditions are sunny but charge does not occur: internal solar controller fault, contact BWT support"],
+            severity:"low", callpro:false }
+        ]
+      }
+    }
+  },
+
+  polaris: {
+    label: "Polaris (Zodiac)",
+    color: "#1d4ed8",
+    categories: {
+      "Polaris Pressure-Side Cleaners": {
+        models:["Polaris 280","Polaris 380","Polaris 480","Polaris 3900 Sport","Polaris 65","Polaris 165","Polaris Quattro Sport"],
+        note:"Polaris pressure-side cleaners require a dedicated booster pump (280/380/480/3900) or work off main pump return pressure (65/165). No electronic error codes — diagnosis is based on observed behavior.",
+        codes:[
+          { code:"Cleaner not moving", name:"Booster Pump Off or Drive Train Issue",
+            causes:["Booster pump not running (for 280/380/480 models)","Feed hose kinked or disconnected","Drive belts broken or missing","Turbine/water wheel clogged","Water flow to cleaner too low"],
+            fix:["Verify booster pump is running and circuit breaker is on","Check all hose connections at wall fitting and cleaner","Inspect all three drive belts — replace if cracked or broken","Remove turbine cover and clear debris from water wheel","Verify booster pump valve is open fully"],
+            severity:"medium", callpro:false },
+          { code:"Cleaner moves but bag not filling", name:"Backup Valve Stuck or Low Flow",
+            causes:["Backup valve not cycling (stuck open or closed)","Water flow rate too low to fill bag","Bag torn or zipper open","Head float restricting intake","Debris deflector missing or misaligned"],
+            fix:["Listen for backup valve clicking every 3-5 minutes — if silent, replace backup valve","Check flow rate — bag should inflate visibly while running","Inspect bag for tears and zipper closure","Remove and inspect head float — should be buoyant, not waterlogged","Confirm debris deflector is installed at intake throat"],
+            severity:"medium", callpro:false },
+          { code:"Cleaner climbs walls and gets stuck", name:"Water Chemistry or Tail Sweep Worn",
+            causes:["Pool walls too slippery from algae or high pH (no traction)","Tail sweep worn or missing (tail sweep provides back-pressure to keep cleaner on floor)","Water pressure too high (overcorrects up walls)","Float tube waterlogged"],
+            fix:["Treat pool chemistry — target pH 7.2-7.6, shock if algae present","Inspect tail sweep — replace if bristles worn below 1 inch","Reduce booster pump pressure if adjustable","Check float tube for water ingress — replace if waterlogged","Add a Polaris wing kit or deflector kit for chronic wall-climbing issues"],
+            severity:"low", callpro:false },
+          { code:"Backup valve not firing", name:"Backup Valve Timer or Wear",
+            causes:["Backup valve timer set too infrequently or too frequently","Backup valve diaphragm worn or cracked","Debris lodged in backup valve seat","Low flow reducing valve actuation pressure"],
+            fix:["Adjust backup valve timer — optimal is every 3-5 minutes (1/3 turn setting on most models)","Remove backup valve and inspect diaphragm — replace if cracked or stiff","Flush valve with clean water to clear debris","Test with a new backup valve if diagnosis is unclear — they are inexpensive and commonly replaced"],
+            severity:"medium", callpro:false },
+          { code:"Cleaner moves in circles", name:"Drive Belts Worn or One Wheel Not Turning",
+            causes:["One drive belt broken, worn, or slipped off","One drive wheel seized or jammed","Wheel axle worn","Uneven pressure from head float position"],
+            fix:["Remove cleaner from pool and inspect all three drive belts — all must be intact and correctly routed","Spin each wheel by hand — all should rotate freely","Replace all three drive belts as a set (they wear at similar rates)","Check wheel axle for debris binding","Re-seat head float in correct position"],
+            severity:"medium", callpro:false },
+          { code:"Head float above water line", name:"Water in Float — Replace",
+            causes:["Head float has cracked or degraded and filled with water","UV degradation of float material over time"],
+            fix:["Remove head float and shake — if you hear water sloshing inside, replace it","Float replacement is straightforward — unclip and swap","Water-filled float causes cleaner to drag along bottom and not cover pool properly"],
+            severity:"low", callpro:false },
+          { code:"Hose collapses", name:"Hose Swivel Restriction",
+            causes:["Hose swivel joint too tight (restricts flow causing suction collapse)","Hose section kinked at connection point","Hose age — older hoses lose flexibility and kink more easily"],
+            fix:["Check all swivel joints — they should rotate freely with minimal resistance","Do not over-tighten hose connections","Straighten hose sections and ensure no sharp bends","Consider replacing hose if it is more than 5 years old and repeatedly kinks"],
+            severity:"low", callpro:false }
+        ]
+      },
+
+      "Polaris Robot Cleaners (i-series)": {
+        models:["Polaris iCleaner","Polaris AW20","Polaris AW40","Polaris Alpha IQ+","Polaris 9550 Sport","Polaris 9450 Sport","Polaris 9350"],
+        note:"Polaris i-series and AW-series robots connect via the iAquaLink or Polaris app. LED indicators on the robot body plus in-app status messages are the primary diagnostic interface.",
+        codes:[
+          { code:"App: Not connecting", name:"Wi-Fi Setup or App Reset Needed",
+            causes:["Wi-Fi network SSID or password changed since initial setup","Robot is paired to old network","App needs update","2.4 GHz Wi-Fi not available (robot requires 2.4 GHz, not 5 GHz)","Router firmware blocking mDNS or local device discovery"],
+            fix:["Open Polaris/iAquaLink app and navigate to Settings > Devices > Remove Device","Re-add robot using in-app setup wizard","Ensure your phone is on 2.4 GHz Wi-Fi during setup (temporarily disable 5 GHz if dual-band)","Update app to latest version from App Store or Google Play","Reset robot Wi-Fi by holding the power button for 10 seconds until LED blinks rapidly"],
+            severity:"low", callpro:false },
+          { code:"App: Filter indicator", name:"Filter Canister Full — Clean Required",
+            causes:["Debris collection canister has reached capacity","Heavy debris load (leaves, algae, fine sediment)","Filter screen clogged reducing suction flow"],
+            fix:["Remove robot from pool","Open filter canister door (rear of robot)","Remove and empty filter canister — dispose of debris","Rinse filter screen/cartridge under garden hose until clear","Reinstall filter and restart cleaning cycle"],
+            severity:"low", callpro:false },
+          { code:"LED: Solid Red (AW20/AW40)", name:"Drive or Motor Fault",
+            causes:["Drive motor stalled or overheated","Impeller blocked by debris","Robot trapped or drive wheel jammed"],
+            fix:["Remove robot from pool","Clear all debris from impeller, brushes, and drive wheels","Let robot cool 15 minutes if it has been running for extended period","Unplug power supply for 60 seconds to perform full reset","If solid red persists after reset and cleaning: contact Polaris/Zodiac support"],
+            severity:"high", callpro:true },
+          { code:"LED: Blinking Red (AW20/AW40)", name:"Cable Tangle or Overcurrent Warning",
+            causes:["Power cable tangled or kinked around robot body","Motor drawing excess current from obstacle or debris jam","Power supply issue"],
+            fix:["Remove robot and untangle cable — lay cable out straight before restarting","Check impeller and brushes for debris","Ensure power cable has enough slack to follow robot through full pool coverage","Use cable swivel if cable tangling is chronic"],
+            severity:"medium", callpro:false },
+          { code:"LED: Solid Blue (AW20/AW40)", name:"Normal Operation",
+            causes:["Robot is running normally"],
+            fix:["No action needed"],
+            severity:"low", callpro:false },
+          { code:"LED: Blinking Blue (AW20/AW40)", name:"Cycle Complete",
+            causes:["Cleaning cycle finished normally"],
+            fix:["Remove robot from pool","Empty and rinse filter canister","Rinse robot exterior","Store out of direct sunlight when not in use"],
+            severity:"low", callpro:false },
+          { code:"No LED / Won't start (i-series)", name:"No Power — Supply or GFCI Fault",
+            causes:["GFCI outlet tripped","Power supply unit failed","Cable damaged at plug or swivel","Transformer output out of spec"],
+            fix:["Press reset button on GFCI outlet — test outlet with another device","Inspect cable for cuts, kinks, or damage at both ends","Check power supply output with multimeter if available","Try a known-good outlet on a different circuit","If power supply confirmed faulty: Polaris OEM power supply replacement required"],
+            severity:"high", callpro:false }
+        ]
+      }
+    }
   }
 };

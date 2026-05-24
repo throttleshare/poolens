@@ -49,9 +49,11 @@ function showTab(name) {
   const btn   = document.getElementById(`nav-${name}`);
   if (panel) panel.classList.add('active');
   if (btn)   btn.classList.add('active');
+  if (S.tab !== 'scan' && name !== 'scan') stopCamera();
   S.tab = name;
   window.scrollTo(0, 0);
   if (name === 'route') renderRoute();
+  if (name === 'scan')  initScanTab();
 }
 
 // ═══════════════════════════════════════════
@@ -2097,4 +2099,312 @@ function infoBox(main, sub) {
     <p style="color:#0f172a;font-size:14px;font-weight:600;">${main}</p>
     ${sub ? `<p style="color:#64748b;font-size:12px;margin-top:6px;line-height:1.5;">${sub}</p>` : ''}
   </div>`;
+}
+
+// ═══════════════════════════════════════════
+// SCAN TAB — Camera AI + Code Lookup + Chem
+// ═══════════════════════════════════════════
+
+let _scanStream  = null;
+let _scanMode    = 'camera';
+let _scanBrand   = null; // null = all brands
+
+function initScanTab() {
+  setScanMode(_scanMode || 'camera');
+  renderScanBrandFilter();
+}
+
+function setScanMode(mode) {
+  _scanMode = mode;
+  ['camera','lookup','chem'].forEach(m => {
+    const btn   = document.getElementById(`scan-mode-${m}`);
+    const panel = document.getElementById(`scan-${m}-panel`);
+    if (btn)   { btn.style.background = m === mode ? '#0284c7' : 'transparent'; btn.style.color = m === mode ? '#fff' : '#94a3b8'; }
+    if (panel) panel.style.display = m === mode ? 'block' : 'none';
+  });
+  if (mode === 'camera') startCamera();
+  else stopCamera();
+  if (mode === 'lookup') renderScanBrandFilter();
+  if (mode === 'chem')   renderChemCatalogHome();
+}
+
+// ── Camera ──────────────────────────────────
+
+function startCamera() {
+  const video  = document.getElementById('scan-video');
+  const noCam  = document.getElementById('scan-no-camera');
+  const vWrap  = document.getElementById('scan-viewfinder-wrap');
+  const status = document.getElementById('scan-camera-status');
+  if (!video) return;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    if (vWrap)  vWrap.style.display  = 'none';
+    if (noCam)  noCam.style.display  = 'block';
+    if (status) status.style.display = 'none';
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } })
+    .then(stream => {
+      _scanStream = stream;
+      video.srcObject = stream;
+      if (vWrap)  vWrap.style.display  = 'block';
+      if (noCam)  noCam.style.display  = 'none';
+      if (status) status.textContent = 'AIM AT ERROR CODE DISPLAY — TAP CAPTURE';
+    })
+    .catch(() => {
+      if (vWrap)  vWrap.style.display  = 'none';
+      if (noCam)  noCam.style.display  = 'block';
+      if (status) status.style.display = 'none';
+    });
+}
+
+function stopCamera() {
+  if (_scanStream) {
+    _scanStream.getTracks().forEach(t => t.stop());
+    _scanStream = null;
+  }
+}
+
+function captureAndAnalyze() {
+  const video  = document.getElementById('scan-video');
+  const canvas = document.getElementById('scan-canvas');
+  const status = document.getElementById('scan-camera-status');
+  const result = document.getElementById('scan-result');
+  if (!video || !canvas) return;
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 360;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+
+  if (status) status.textContent = 'ANALYZING…';
+
+  // Try native Text Detection API (Chrome/Android, some desktop Chrome)
+  if ('TextDetector' in window) {
+    canvas.convertToBlob({ type: 'image/jpeg' }).then(blob => {
+      createImageBitmap(blob).then(bmp => {
+        const detector = new TextDetector();
+        detector.detect(bmp).then(texts => {
+          const raw = texts.map(t => t.rawValue).join(' ');
+          const codes = extractErrorCodes(raw);
+          if (codes.length) {
+            runCodeSearch(codes[0], result, status);
+          } else {
+            showCaptureWithManualEntry(canvas, raw, result, status);
+          }
+        }).catch(() => showCaptureWithManualEntry(canvas, '', result, status));
+      });
+    }).catch(() => showCaptureWithManualEntry(canvas, '', result, status));
+  } else {
+    showCaptureWithManualEntry(canvas, '', result, status);
+  }
+}
+
+function extractErrorCodes(text) {
+  if (!text) return [];
+  const t = text.toUpperCase();
+  const patterns = [
+    /\bE\d{1,3}\b/g,          // E01, E5, E123
+    /\bERR(?:OR)?\s*\d{1,3}\b/g, // ERR 3, ERROR 05
+    /\bFLO\b/g,
+    /\bLO\b/g, /\bHI\b/g,
+    /\bSF\b/g,  /\bAGS\b/g,
+    /\bBD\b/g,
+    /\bF\d{1,3}\b/g,          // F1, F25 (Jandy style)
+    /\b\d{1,3}\b/g             // bare numbers as fallback
+  ];
+  const found = new Set();
+  patterns.forEach(rx => { const m = t.match(rx); if (m) m.forEach(c => found.add(c.replace(/\s+/g,''))); });
+  // deduplicate and remove bare single digits unless nothing else
+  const rich = [...found].filter(c => c.length > 1 || /E\d/.test(c));
+  return rich.length ? rich : [...found];
+}
+
+function showCaptureWithManualEntry(canvas, detectedText, result, status) {
+  if (status) status.textContent = 'ENTER CODE SHOWN ON DISPLAY';
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+  if (result) result.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <img src="${dataUrl}" style="width:100%;border-radius:8px;border:2px solid #334155;max-height:200px;object-fit:cover;">
+    </div>
+    ${detectedText ? `<p style="color:#7dd3fc;font-size:12px;margin-bottom:10px;font-weight:600;">Detected text: ${detectedText}</p>` : ''}
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input id="scan-manual-code" type="text" value="${detectedText}" placeholder="Type error code (e.g. E05)"
+        style="flex:1;padding:12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#f1f5f9;font-size:16px;outline:none;letter-spacing:.06em;"
+        oninput="scanManualSearch(this.value)">
+    </div>
+    <div id="scan-manual-results"></div>
+  `;
+}
+
+function scanManualSearch(val) {
+  const el = document.getElementById('scan-manual-results');
+  if (!el || !val.trim()) { if (el) el.innerHTML = ''; return; }
+  const hits = searchErrorDB(val.trim());
+  el.innerHTML = renderScanHits(hits, val.trim());
+}
+
+function runCodeSearch(code, result, status) {
+  if (status) status.textContent = `FOUND CODE: ${code}`;
+  const hits = searchErrorDB(code);
+  if (result) {
+    result.innerHTML = `
+      <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <p style="color:#7dd3fc;font-size:11px;font-weight:700;letter-spacing:.06em;margin-bottom:4px;">DETECTED CODE</p>
+        <p style="color:#f1f5f9;font-size:18px;font-weight:800;letter-spacing:.08em;">${code}</p>
+      </div>
+      ${renderScanHits(hits, code)}
+    `;
+  }
+}
+
+// ── Code Lookup ─────────────────────────────
+
+function renderScanBrandFilter() {
+  const el = document.getElementById('scan-brand-filter');
+  if (!el || !window.ERROR_DB) return;
+  const brands = Object.entries(window.ERROR_DB);
+  el.innerHTML = `
+    <button onclick="setScanBrand(null)" style="${scanBrandPillStyle(_scanBrand === null)}">All Brands</button>
+    ${brands.map(([k,b]) => `<button onclick="setScanBrand('${k}')" style="${scanBrandPillStyle(_scanBrand === k)}">${b.label}</button>`).join('')}
+  `;
+}
+
+function scanBrandPillStyle(active) {
+  return `padding:6px 14px;border-radius:100px;border:1px solid ${active ? '#0284c7' : '#334155'};background:${active ? '#0284c7' : '#1e293b'};color:${active ? '#fff' : '#94a3b8'};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;`;
+}
+
+function setScanBrand(brand) {
+  _scanBrand = brand;
+  renderScanBrandFilter();
+  const input = document.getElementById('scan-code-input');
+  if (input) scanCodeSearch(input.value);
+}
+
+function scanCodeSearch(val) {
+  const el = document.getElementById('scan-lookup-results');
+  if (!el) return;
+  if (!val.trim()) {
+    el.innerHTML = `<p style="color:#475569;font-size:13px;text-align:center;padding:24px 0;">Enter an error code to search</p>`;
+    return;
+  }
+  const hits = searchErrorDB(val.trim(), _scanBrand);
+  el.innerHTML = renderScanHits(hits, val.trim());
+}
+
+function searchErrorDB(query, brandFilter) {
+  if (!window.ERROR_DB) return [];
+  const q = query.trim().toUpperCase().replace(/\s+/g,'');
+  const results = [];
+  const brands = brandFilter ? { [brandFilter]: window.ERROR_DB[brandFilter] } : window.ERROR_DB;
+  for (const [brandKey, brand] of Object.entries(brands)) {
+    if (!brand?.categories) continue;
+    for (const [catName, cat] of Object.entries(brand.categories)) {
+      for (const code of (cat.codes || [])) {
+        const c = code.code.toUpperCase().replace(/\s+/g,'');
+        const n = (code.name || '').toUpperCase();
+        if (c.includes(q) || q.includes(c) || n.includes(q)) {
+          results.push({ brandKey, brandLabel: brand.label, brandColor: brand.color || '#0284c7', category: catName, ...code });
+        }
+      }
+    }
+  }
+  return results;
+}
+
+function renderScanHits(hits, query) {
+  if (!hits.length) return `
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:20px;text-align:center;">
+      <p style="color:#64748b;font-size:13px;">No matches for <strong style="color:#94a3b8">"${query}"</strong></p>
+      <p style="color:#475569;font-size:12px;margin-top:6px;">Try the brand name + code, or search a keyword (e.g. "ignition", "flow", "pressure")</p>
+    </div>`;
+  return hits.map(h => `
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid ${h.brandColor};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="background:${h.brandColor};color:#fff;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700;">${h.brandLabel}</span>
+        <span style="color:#94a3b8;font-size:11px;">${h.category}</span>
+        <span style="margin-left:auto;background:${h.severity==='high'?'#dc2626':h.severity==='medium'?'#d97706':'#16a34a'};color:#fff;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">${(h.severity||'').toUpperCase()}</span>
+      </div>
+      <div style="font-size:20px;font-weight:900;color:#f1f5f9;letter-spacing:.08em;margin-bottom:4px;">${h.code}</div>
+      <div style="font-size:14px;font-weight:700;color:#7dd3fc;margin-bottom:10px;">${h.name}</div>
+      ${h.causes?.length ? `
+        <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Likely Causes</p>
+        <ul style="margin:0 0 10px;padding-left:16px;">${h.causes.map(c=>`<li style="color:#94a3b8;font-size:13px;line-height:1.5;">${c}</li>`).join('')}</ul>
+      ` : ''}
+      ${h.fix?.length ? `
+        <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Fix Steps</p>
+        <ol style="margin:0;padding-left:16px;">${h.fix.map(f=>`<li style="color:#e2e8f0;font-size:13px;line-height:1.6;margin-bottom:2px;">${f}</li>`).join('')}</ol>
+      ` : ''}
+      ${h.callpro ? `<p style="color:#fbbf24;font-size:12px;font-weight:700;margin-top:10px;">⚠ Recommend calling a certified technician for this fault.</p>` : ''}
+    </div>
+  `).join('');
+}
+
+// ── Chem Catalog ─────────────────────────────
+
+function renderChemCatalogHome() {
+  const el = document.getElementById('scan-chem-results');
+  if (!el) return;
+  if (!window.CHEM_CATALOG) {
+    el.innerHTML = `<p style="color:#475569;font-size:13px;text-align:center;padding:24px 0;">Chemical catalog loading…</p>`;
+    return;
+  }
+  const { homeAlternatives } = window.CHEM_CATALOG;
+  if (homeAlternatives?.length) {
+    el.innerHTML = `
+      <p style="color:#7dd3fc;font-size:12px;font-weight:700;letter-spacing:.06em;margin-bottom:12px;">💰 HOME STORE ALTERNATIVES</p>
+      ${homeAlternatives.map(a => `
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid #16a34a;">
+          <p style="color:#86efac;font-size:12px;font-weight:700;margin-bottom:4px;">${a.chemical}</p>
+          <p style="color:#f1f5f9;font-size:14px;font-weight:700;margin-bottom:4px;">${a.homeProduct}</p>
+          <p style="color:#94a3b8;font-size:12px;margin-bottom:4px;">${a.savings}</p>
+          ${a.caution ? `<p style="color:#fbbf24;font-size:11px;font-weight:600;">⚠ ${a.caution}</p>` : ''}
+        </div>
+      `).join('')}
+    `;
+  } else {
+    el.innerHTML = `<p style="color:#475569;font-size:13px;text-align:center;padding:24px 0;">Search above to find chemical products</p>`;
+  }
+}
+
+function scanChemSearch(val) {
+  const el = document.getElementById('scan-chem-results');
+  if (!el) return;
+  if (!val.trim()) { renderChemCatalogHome(); return; }
+  const q = val.toLowerCase();
+  if (!window.CHEM_CATALOG?.categories) {
+    el.innerHTML = `<p style="color:#475569;font-size:13px;text-align:center;padding:24px 0;">Chemical catalog not yet loaded. Please try again.</p>`;
+    return;
+  }
+  const hits = [];
+  for (const cat of window.CHEM_CATALOG.categories) {
+    for (const p of (cat.products || [])) {
+      const searchable = [p.name, p.genericName, p.activeIngredient, ...(p.brands||[])].join(' ').toLowerCase();
+      if (searchable.includes(q)) hits.push({ ...p, catLabel: cat.label });
+    }
+  }
+  if (!hits.length) {
+    el.innerHTML = `<p style="color:#475569;font-size:13px;text-align:center;padding:24px 0;">No results for "${val}"</p>`;
+    return;
+  }
+  el.innerHTML = hits.map(p => `
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:10px;">
+      <p style="color:#7dd3fc;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${p.catLabel}</p>
+      <p style="color:#f1f5f9;font-size:15px;font-weight:700;margin-bottom:2px;">${p.name}</p>
+      <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;">${p.genericName}${p.activeIngredient ? ' · ' + p.activeIngredient : ''}</p>
+      ${p.brands?.length ? `<p style="color:#64748b;font-size:11px;font-weight:600;margin-bottom:6px;">Brands: ${p.brands.join(', ')}</p>` : ''}
+      ${p.notes ? `<p style="color:#94a3b8;font-size:12px;line-height:1.5;margin-bottom:8px;">${p.notes}</p>` : ''}
+      ${p.alternatives?.length ? `
+        <p style="color:#86efac;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">💰 Store Alternatives</p>
+        ${p.alternatives.map(a => `
+          <div style="background:#0f172a;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;gap:10px;align-items:flex-start;">
+            <span style="background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0;">${a.store}</span>
+            <div>
+              <p style="color:#e2e8f0;font-size:12px;font-weight:600;">${a.product}</p>
+              ${a.note ? `<p style="color:#64748b;font-size:11px;">${a.note}</p>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+      ${p.incompatible?.length ? `<p style="color:#fbbf24;font-size:11px;font-weight:600;margin-top:8px;">⚠ Never mix with: ${p.incompatible.join(', ')}</p>` : ''}
+    </div>
+  `).join('');
 }
