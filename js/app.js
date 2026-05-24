@@ -11,8 +11,9 @@ const S = {
   slamType: null,
   clType: 'opening',
   checklists: { opening: {}, closing: {}, weekly: {}, monthly: {} },
-  pool: null,      // currently viewed pool id
-  poolView: 'list', // 'list' | 'detail' | 'new' | 'edit'
+  filterType: 'sand',
+  pool: null,
+  poolView: 'list',
 };
 
 const CL_MAP = {
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReport();
   loadPersistedVolume();
   initPools();
+  initRoute();
 });
 
 // ═══════════════════════════════════════════
@@ -48,6 +50,7 @@ function showTab(name) {
   if (btn)   btn.classList.add('active');
   S.tab = name;
   window.scrollTo(0, 0);
+  if (name === 'route') renderRoute();
 }
 
 // ═══════════════════════════════════════════
@@ -623,6 +626,8 @@ function useVolumeInDosing(gallons) {
 function initSandFilter() {
   renderSandTable();
   renderAltMedia();
+  renderDeSection();
+  renderCartridgeSection();
 }
 
 function renderSandTable() {
@@ -700,6 +705,152 @@ function renderAltMedia() {
           <p style="color:#0284c7;font-size:11px;font-family:monospace;margin-top:3px;">${m.amount}</p>
           <p style="color:#64748b;font-size:12px;margin-top:3px;line-height:1.4;">${m.note}</p>
         </div>`).join('')}
+    </div>`);
+}
+
+// ═══════════════════════════════════════════
+// FILTER TYPE SUB-NAV
+// ═══════════════════════════════════════════
+function switchFilterType(type) {
+  S.filterType = type;
+  ['sand', 'de', 'cart'].forEach(t => {
+    const btn     = document.getElementById(`flt-btn-${t}`);
+    const content = document.getElementById(`filter-${t}-content`);
+    if (btn)     btn.classList.toggle('active', t === type);
+    if (content) content.style.display = t === type ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════
+// DE FILTER REFERENCE
+// ═══════════════════════════════════════════
+function renderDeSection() {
+  const data = window.DE_FILTER_DATA;
+  const tableRows = data.filters.map((f, i) =>
+    `<tr class="sand-row" onclick="tapDeRow(${f.sqft || 0})" style="background:${i % 2 ? '#f8fafc' : '#ffffff'};">
+      <td style="padding:7px 10px;color:#0f172a;font-weight:700;font-size:12px;">${f.brand}</td>
+      <td style="padding:7px 10px;color:#0369a1;font-size:12px;font-weight:700;">${f.model}</td>
+      <td style="padding:7px 10px;color:#374151;font-size:12px;">${f.sqft ? f.sqft + ' ft²' : '—'}</td>
+      <td style="padding:7px 10px;color:#0284c7;font-size:12px;font-weight:800;">${f.deChargeLbs ? f.deChargeLbs + ' lbs' : '—'}</td>
+    </tr>`).join('');
+
+  setEl('de-section', `
+    <p style="color:#0369a1;font-weight:900;font-size:16px;margin-bottom:4px;">DE Filter Reference</p>
+    <p style="color:#64748b;font-size:12px;margin-bottom:10px;">Tap any row to fill calculator</p>
+
+    <div class="scroll-x" style="border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px;">
+        <thead>
+          <tr style="background:#f1f5f9;border-bottom:2px solid #e2e8f0;">
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Brand</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Model</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Sq Ft</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">DE (lbs)</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#0369a1;font-weight:800;font-size:13px;margin-bottom:12px;">DE Charge Calculator</p>
+      <div class="field-group">
+        <label class="field-label">Filter Area (sq ft)</label>
+        <input type="number" id="de-sqft" placeholder="e.g. 48" min="1" max="200" inputmode="decimal" oninput="calcDeCharge(this.value)">
+      </div>
+      <div id="de-charge-result"></div>
+      <div class="warn-box" style="margin-top:10px;font-size:11px;">⚠ Wear a dust mask when handling DE powder — silica is a respiratory hazard.</div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#0369a1;font-weight:800;font-size:13px;margin-bottom:10px;">Recharge Procedure</p>
+      ${data.recharge.steps.map((s, i) => `
+        <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9;">
+          <div style="width:22px;height:22px;min-width:22px;border-radius:50%;background:linear-gradient(135deg,#0284c7,#0369a1);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;">${i + 1}</div>
+          <p style="color:#374151;font-size:13px;line-height:1.45;padding-top:2px;">${s}</p>
+        </div>`).join('')}
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#92400e;font-size:13px;font-weight:800;margin-bottom:8px;">Grid Replacement Signs</p>
+      ${data.gridReplacement.signs.map(s => `<p style="color:#374151;font-size:12px;padding:4px 0;display:flex;gap:7px;"><span style="color:#dc2626;flex-shrink:0;">•</span>${s}</p>`).join('')}
+      <p style="color:#94a3b8;font-size:10px;margin-top:10px;">${data.gridReplacement.interval}</p>
+      <div class="info-box" style="margin-top:8px;font-size:11px;">Acid wash: ${data.gridReplacement.acidWash}</div>
+    </div>`);
+}
+
+function tapDeRow(sqft) {
+  if (!sqft) return;
+  const el = document.getElementById('de-sqft');
+  if (el) { el.value = sqft; calcDeCharge(sqft); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+
+function calcDeCharge(sqft) {
+  sqft = parseFloat(sqft);
+  if (!sqft || sqft <= 0) { setEl('de-charge-result', ''); return; }
+  const initial       = (sqft * 0.1).toFixed(1);
+  const afterBackwash = (sqft * 0.08).toFixed(1);
+  setEl('de-charge-result', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+      <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:12px;text-align:center;">
+        <p style="color:#64748b;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Initial / Full Teardown</p>
+        <p style="color:#0369a1;font-size:28px;font-weight:900;line-height:1;">${initial}</p>
+        <p style="color:#0284c7;font-size:11px;">lbs DE</p>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;text-align:center;">
+        <p style="color:#64748b;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">After Backwash (80%)</p>
+        <p style="color:#166534;font-size:28px;font-weight:900;line-height:1;">${afterBackwash}</p>
+        <p style="color:#16a34a;font-size:11px;">lbs DE</p>
+      </div>
+    </div>
+    <p style="color:#94a3b8;font-size:10px;margin-top:8px;text-align:center;">${sqft} sq ft filter · 0.1 lbs/sq ft initial · 0.08 lbs/sq ft after backwash</p>`);
+}
+
+// ═══════════════════════════════════════════
+// CARTRIDGE FILTER REFERENCE
+// ═══════════════════════════════════════════
+function renderCartridgeSection() {
+  const data = window.CARTRIDGE_FILTER_DATA;
+  const tableRows = data.filters.map((f, i) =>
+    `<tr style="background:${i % 2 ? '#f8fafc' : '#ffffff'};">
+      <td style="padding:7px 10px;color:#0f172a;font-weight:700;font-size:12px;">${f.brand}</td>
+      <td style="padding:7px 10px;color:#0369a1;font-size:12px;font-weight:700;">${f.model}</td>
+      <td style="padding:7px 10px;color:#374151;font-size:12px;">${f.sqft} ft²</td>
+      <td style="padding:7px 10px;color:#64748b;font-size:11px;">${f.elements} elem.</td>
+    </tr>`).join('');
+
+  setEl('cart-section', `
+    <p style="color:#0369a1;font-weight:900;font-size:16px;margin-bottom:12px;">Cartridge Filter Reference</p>
+
+    <div class="scroll-x" style="border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:320px;">
+        <thead>
+          <tr style="background:#f1f5f9;border-bottom:2px solid #e2e8f0;">
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Brand</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Model</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Sq Ft</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Elem.</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+
+    <div class="info-box" style="margin-bottom:12px;">Clean when pressure is 8+ PSI above your clean baseline. Most filters: every 3–6 months minimum.</div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#0369a1;font-weight:800;font-size:13px;margin-bottom:10px;">Cleaning Procedure</p>
+      ${data.cleaning.steps.map((s, i) => `
+        <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9;">
+          <div style="width:22px;height:22px;min-width:22px;border-radius:50%;background:linear-gradient(135deg,#0284c7,#0369a1);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;">${i + 1}</div>
+          <p style="color:#374151;font-size:13px;line-height:1.45;padding-top:2px;">${s}</p>
+        </div>`).join('')}
+      <p style="color:#94a3b8;font-size:11px;margin-top:10px;">${data.cleaning.replacementInterval}</p>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#92400e;font-size:13px;font-weight:800;margin-bottom:8px;">Replacement Signs</p>
+      ${data.cleaning.signs.map(s => `<p style="color:#374151;font-size:12px;padding:4px 0;display:flex;gap:7px;"><span style="color:#dc2626;flex-shrink:0;">•</span>${s}</p>`).join('')}
     </div>`);
 }
 
@@ -807,7 +958,7 @@ function addChemRow() {
   div.innerHTML = `
     <input type="text" id="cr-name-${id}" placeholder="Chemical name..." style="background:#ffffff;border:1px solid #cbd5e1;color:#0f172a;border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;width:100%;">
     <input type="text" id="cr-amt-${id}"  placeholder="Amount" inputmode="decimal" style="background:#ffffff;border:1px solid #cbd5e1;color:#0f172a;border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;width:100%;">
-    <button type="button" onclick="removeChemRow(${id})" style="background:#180000;border:1px solid #7f1d1d;color:#f87171;border-radius:8px;padding:0;height:36px;width:36px;cursor:pointer;font-size:18px;line-height:1;">×</button>`;
+    <button type="button" onclick="removeChemRow(${id})" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:8px;padding:0;height:36px;width:36px;cursor:pointer;font-size:18px;line-height:1;">×</button>`;
   container.appendChild(div);
 }
 
@@ -1366,6 +1517,222 @@ function copyText(text, btn) {
     btn.style.borderColor = '#166534';
     setTimeout(() => { btn.textContent = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
   }).catch(() => {});
+}
+
+// ═══════════════════════════════════════════
+// ROUTE / DAY VIEW
+// ═══════════════════════════════════════════
+const ROUTE_KEY = 'poolens-route';
+
+function getTodayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getRoute() {
+  try {
+    const raw = localStorage.getItem(ROUTE_KEY);
+    if (!raw) return { date: getTodayStr(), jobs: [] };
+    return JSON.parse(raw);
+  } catch(e) {
+    return { date: getTodayStr(), jobs: [] };
+  }
+}
+
+function saveRoute(route) {
+  localStorage.setItem(ROUTE_KEY, JSON.stringify(route));
+}
+
+function initRoute() {
+  renderRoute();
+}
+
+function renderRoute() {
+  const container = document.getElementById('route-content');
+  if (!container) return;
+
+  const route      = getRoute();
+  const todayStr   = getTodayStr();
+  const isToday    = route.date === todayStr;
+  const dateObj    = new Date(route.date + 'T12:00:00');
+  const dateFmt    = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const doneCount  = route.jobs.filter(j => j.done).length;
+  const total      = route.jobs.length;
+
+  const staleBanner = (!isToday && total > 0)
+    ? `<div class="warn-box" style="margin-bottom:12px;font-size:12px;">Showing route from ${dateFmt}. <button onclick="startNewRouteDay()" style="background:none;border:none;color:#92400e;font-weight:800;cursor:pointer;text-decoration:underline;padding:0;">Start Today</button></div>`
+    : '';
+
+  const progressBar = total > 0
+    ? `<div style="margin:10px 0 14px;">
+         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+           <span style="color:#64748b;font-size:12px;font-weight:700;">Stops complete</span>
+           <span style="color:#0369a1;font-size:13px;font-weight:900;">${doneCount} / ${total}</span>
+         </div>
+         <div class="progress-track"><div class="progress-fill" style="width:${(doneCount / total * 100).toFixed(0)}%;"></div></div>
+       </div>`
+    : '';
+
+  const jobsHtml = total === 0
+    ? `<div style="text-align:center;padding:36px 16px;">
+         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" style="margin:0 auto 14px;display:block;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+         <p style="font-size:15px;font-weight:700;color:#475569;margin-bottom:5px;">No stops planned</p>
+         <p style="font-size:13px;color:#94a3b8;">Add pool stops from your list or custom stops below.</p>
+       </div>`
+    : route.jobs.map((job, idx) => routeJobCard(job, idx)).join('');
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+      <div>
+        <p style="color:#0369a1;font-weight:900;font-size:16px;">Today's Route</p>
+        <p style="color:#64748b;font-size:12px;">${isToday ? dateFmt : 'Viewing: ' + dateFmt}</p>
+      </div>
+      ${total > 0 ? `<button onclick="confirmClearRoute()" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;">Clear</button>` : ''}
+    </div>
+
+    ${staleBanner}
+    ${progressBar}
+
+    <div id="route-jobs">${jobsHtml}</div>
+
+    <div id="route-pool-picker" style="display:none;"></div>
+    <div id="route-manual-wrap" style="display:none;margin-top:8px;">
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;">
+        <input type="text" id="route-manual-name" placeholder="Stop description…" style="font-size:16px;">
+        <button onclick="confirmAddManualRouteStop()" style="background:#0369a1;color:white;border:none;border-radius:9px;padding:12px 16px;font-weight:800;cursor:pointer;">Add</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+      <button onclick="toggleRoutePoolPicker()" style="background:#eff6ff;border:1px solid #93c5fd;color:#0369a1;font-weight:800;font-size:13px;padding:12px;border-radius:9px;cursor:pointer;">+ Pool Stop</button>
+      <button onclick="toggleRouteManualInput()" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#374151;font-weight:800;font-size:13px;padding:12px;border-radius:9px;cursor:pointer;">+ Custom Stop</button>
+    </div>`;
+}
+
+function routeJobCard(job, idx) {
+  const op = job.done ? 'opacity:0.5;' : '';
+  const tx = job.done ? 'text-decoration:line-through;color:#94a3b8;' : 'color:#0f172a;';
+  return `
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04);${op}">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <input type="checkbox" ${job.done ? 'checked' : ''} onclick="toggleRouteJobDone(${idx})"
+               style="width:22px;height:22px;min-width:22px;flex-shrink:0;margin-top:2px;accent-color:#0284c7;cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:14px;font-weight:800;${tx}">${escHtml(job.name)}</p>
+          ${job.address ? `<p style="color:#64748b;font-size:12px;margin-top:2px;">${escHtml(job.address)}</p>` : ''}
+          ${job.type === 'pool' && job.poolId
+            ? `<button onclick="openPoolFromRoute('${job.poolId}')" style="background:none;border:none;color:#0284c7;font-size:11px;font-weight:700;cursor:pointer;padding:0;margin-top:4px;">View Profile →</button>`
+            : ''}
+        </div>
+        <button onclick="deleteRouteJob(${idx})"
+                style="background:none;border:none;color:#cbd5e1;cursor:pointer;padding:4px;flex-shrink:0;font-size:20px;line-height:1;">×</button>
+      </div>
+    </div>`;
+}
+
+function toggleRouteJobDone(idx) {
+  const route = getRoute();
+  if (!route.jobs[idx]) return;
+  route.jobs[idx].done = !route.jobs[idx].done;
+  saveRoute(route);
+  renderRoute();
+}
+
+function deleteRouteJob(idx) {
+  const route = getRoute();
+  route.jobs.splice(idx, 1);
+  saveRoute(route);
+  renderRoute();
+}
+
+function confirmClearRoute() {
+  if (!confirm('Clear all stops from today\'s route?')) return;
+  saveRoute({ date: getTodayStr(), jobs: [] });
+  renderRoute();
+}
+
+function startNewRouteDay() {
+  saveRoute({ date: getTodayStr(), jobs: [] });
+  renderRoute();
+}
+
+function toggleRoutePoolPicker() {
+  const picker = document.getElementById('route-pool-picker');
+  if (!picker) return;
+  // Close manual input if open
+  const manualWrap = document.getElementById('route-manual-wrap');
+  if (manualWrap) manualWrap.style.display = 'none';
+
+  if (picker.style.display !== 'none') { picker.style.display = 'none'; picker.innerHTML = ''; return; }
+  const pools = getPools();
+  if (pools.length === 0) {
+    picker.style.display = '';
+    picker.innerHTML = `<div class="info-box" style="margin-top:8px;">No pools saved yet. Add pools in the Pools tab first.</div>`;
+    return;
+  }
+  picker.style.display = '';
+  picker.innerHTML = `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-top:8px;">
+      <p style="color:#64748b;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Select Pool to Add</p>
+      ${pools.map(p => `
+        <div onclick="addPoolToRoute('${p.id}')"
+             style="padding:10px;border-radius:7px;cursor:pointer;margin-bottom:4px;border:1px solid #e2e8f0;background:#ffffff;-webkit-tap-highlight-color:transparent;">
+          <p style="color:#0f172a;font-size:14px;font-weight:700;">${escHtml(p.name)}</p>
+          ${p.address ? `<p style="color:#64748b;font-size:12px;">${escHtml(p.address)}</p>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+function addPoolToRoute(poolId) {
+  const pools = getPools();
+  const pool  = pools.find(p => p.id === poolId);
+  if (!pool) return;
+  const route = getRoute();
+  route.jobs.push({
+    id:      String(Date.now()),
+    type:    'pool',
+    poolId:  pool.id,
+    name:    pool.name,
+    address: pool.address || '',
+    done:    false,
+  });
+  saveRoute(route);
+  renderRoute();
+}
+
+function toggleRouteManualInput() {
+  const wrap = document.getElementById('route-manual-wrap');
+  if (!wrap) return;
+  // Close pool picker if open
+  const picker = document.getElementById('route-pool-picker');
+  if (picker) { picker.style.display = 'none'; picker.innerHTML = ''; }
+
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : '';
+  if (!visible) {
+    const el = document.getElementById('route-manual-name');
+    if (el) { el.value = ''; el.focus(); }
+  }
+}
+
+function confirmAddManualRouteStop() {
+  const el   = document.getElementById('route-manual-name');
+  const name = el ? el.value.trim() : '';
+  if (!name) { if (el) el.focus(); return; }
+  const route = getRoute();
+  route.jobs.push({
+    id:      String(Date.now()),
+    type:    'manual',
+    name,
+    address: '',
+    done:    false,
+  });
+  saveRoute(route);
+  renderRoute();
+}
+
+function openPoolFromRoute(poolId) {
+  showTab('pools');
+  setTimeout(() => renderPoolDetail(poolId), 80);
 }
 
 function errorBox(msg) {

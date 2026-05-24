@@ -254,39 +254,60 @@
       <div id="vol-result" style="margin-top:14px;"></div>
     </div>
 
-    <!-- ─── SAND FILTER ─── -->
+    <!-- ─── FILTERS (Sand / DE / Cartridge) ─── -->
     <div id="tab-sand" class="tab-panel" style="padding:14px;">
-      <p style="color:#0369a1;font-weight:900;font-size:16px;margin-bottom:14px;">Sand Filter Reference</p>
 
-      <div class="field-group">
-        <label class="field-label">Tank Diameter (inches)</label>
-        <input type="number" id="sand-dia" placeholder="e.g. 24" min="10" max="48" inputmode="decimal" oninput="lookupSandFilter(this.value)">
-      </div>
-      <div id="sand-result" style="margin-bottom:14px;"></div>
-
-      <label class="field-label" style="margin-bottom:8px;">Tap Any Row</label>
-      <div class="scroll-x" style="border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-        <table id="sand-quick-table" style="width:100%;border-collapse:collapse;font-size:12px;min-width:300px;"></table>
+      <!-- Filter type sub-nav -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
+        <button id="flt-btn-sand" class="cat-pill active" onclick="switchFilterType('sand')">Sand</button>
+        <button id="flt-btn-de"   class="cat-pill" onclick="switchFilterType('de')">DE (Diatom.)</button>
+        <button id="flt-btn-cart" class="cat-pill" onclick="switchFilterType('cart')">Cartridge</button>
       </div>
 
-      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-        <p style="color:#0369a1;font-weight:700;font-size:13px;margin-bottom:10px;">Backwash Protocol</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-          <div style="background:#f0f9ff;border-radius:8px;padding:10px;border:1px solid #e0f2fe;">
-            <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Trigger</p>
-            <p style="color:#0f172a;font-size:20px;font-weight:900;">+8 PSI</p>
-            <p style="color:#64748b;font-size:10px;margin-top:2px;">above clean baseline</p>
-          </div>
-          <div style="background:#f0f9ff;border-radius:8px;padding:10px;border:1px solid #e0f2fe;">
-            <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Duration</p>
-            <p style="color:#0f172a;font-size:20px;font-weight:900;">2 min</p>
-            <p style="color:#64748b;font-size:10px;margin-top:2px;">until sight glass clears</p>
-          </div>
+      <!-- SAND content -->
+      <div id="filter-sand-content">
+        <div class="field-group">
+          <label class="field-label">Tank Diameter (inches)</label>
+          <input type="number" id="sand-dia" placeholder="e.g. 24" min="10" max="48" inputmode="decimal" oninput="lookupSandFilter(this.value)">
         </div>
-        <div class="warn-box">Always RINSE 15–30 seconds after backwash before returning to FILTER.</div>
+        <div id="sand-result" style="margin-bottom:14px;"></div>
+        <label class="field-label" style="margin-bottom:8px;">Tap Any Row</label>
+        <div class="scroll-x" style="border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <table id="sand-quick-table" style="width:100%;border-collapse:collapse;font-size:12px;min-width:300px;"></table>
+        </div>
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <p style="color:#0369a1;font-weight:700;font-size:13px;margin-bottom:10px;">Backwash Protocol</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <div style="background:#f0f9ff;border-radius:8px;padding:10px;border:1px solid #e0f2fe;">
+              <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Trigger</p>
+              <p style="color:#0f172a;font-size:20px;font-weight:900;">+8 PSI</p>
+              <p style="color:#64748b;font-size:10px;margin-top:2px;">above clean baseline</p>
+            </div>
+            <div style="background:#f0f9ff;border-radius:8px;padding:10px;border:1px solid #e0f2fe;">
+              <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Duration</p>
+              <p style="color:#0f172a;font-size:20px;font-weight:900;">2 min</p>
+              <p style="color:#64748b;font-size:10px;margin-top:2px;">until sight glass clears</p>
+            </div>
+          </div>
+          <div class="warn-box">Always RINSE 15–30 seconds after backwash before returning to FILTER.</div>
+        </div>
+        <div id="alt-media-section"></div>
       </div>
 
-      <div id="alt-media-section"></div>
+      <!-- DE content (rendered by JS) -->
+      <div id="filter-de-content" style="display:none;">
+        <div id="de-section"></div>
+      </div>
+
+      <!-- Cartridge content (rendered by JS) -->
+      <div id="filter-cart-content" style="display:none;">
+        <div id="cart-section"></div>
+      </div>
+    </div>
+
+    <!-- ─── ROUTE ─── -->
+    <div id="tab-route" class="tab-panel" style="padding:14px;">
+      <div id="route-content"></div>
     </div>
 
     <!-- ─── REPORT ─── -->
@@ -415,7 +436,7 @@
     </button>
     <button class="nav-btn" id="nav-sand" onclick="showTab('sand')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-      <span>Sand</span>
+      <span>Filters</span>
     </button>
     <button class="nav-btn" id="nav-guide" onclick="showTab('guide')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
@@ -428,6 +449,10 @@
     <button class="nav-btn" id="nav-pools" onclick="showTab('pools')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span>Pools</span>
+    </button>
+    <button class="nav-btn" id="nav-route" onclick="showTab('route')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="12" y1="18" x2="16" y2="18"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="8" y1="18" x2="8.01" y2="18"/></svg>
+      <span>Route</span>
     </button>
   </nav>
 
