@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPersistedVolume();
   initPools();
   initRoute();
+  checkOfflineStatus();
 });
 
 // ═══════════════════════════════════════════
@@ -271,6 +272,8 @@ function initDosing() {
   renderSlamProducts();
   renderRangesTable();
   renderAdditionOrder();
+  renderSaltSection();
+  renderDangerSection();
 }
 
 function onParamChange() {
@@ -1037,6 +1040,357 @@ function printReport() {
   </head><body><pre>${safe}</pre>
   <script>window.onload=()=>window.print();<\/script></body></html>`);
   win.document.close();
+}
+
+// ═══════════════════════════════════════════
+// TREATMENT PLAN GENERATOR
+// ═══════════════════════════════════════════
+function calcTreatmentPlan() {
+  const fc  = gf('plan-fc');
+  const cc  = gf('plan-cc');
+  const ph  = gf('plan-ph');
+  const ta  = gf('plan-ta');
+  const ch  = gf('plan-ch');
+  const cya = gf('plan-cya');
+  const vol = gf('plan-vol');
+
+  if ([ph, ta].some(v => isNaN(v)) && isNaN(fc)) {
+    return setEl('plan-result', errorBox('Enter at least FC, pH, TA, and CYA to generate a plan.'));
+  }
+
+  const steps = [];
+  const minFC = (!isNaN(cya) && cya > 0) ? Math.max(2, cya * 0.075) : 3;
+  const needsSlam = (!isNaN(cc) && cc >= 0.5) || (!isNaN(fc) && fc < minFC * 0.5);
+
+  // TA first (affects pH buffer capacity)
+  if (!isNaN(ta)) {
+    if (ta < 60) {
+      const delta = 80 - ta;
+      const dose = (!isNaN(vol) && vol > 0) ? ((delta / 10) * (vol / 10000) * 1.5).toFixed(1) + ' lbs Baking Soda' : 'baking soda (see Dosing Calculator for dose)';
+      steps.push({ num:1, type:'ta', icon:'↑', label:'Raise Total Alkalinity',
+        detail:`TA is ${ta} ppm — low. Target 80–100 ppm.`,
+        action:`Add ${dose}. Broadcast across the surface with pump running.`,
+        wait:'15 min, retest before adjusting pH' });
+    } else if (ta > 130) {
+      steps.push({ num:1, type:'ta', icon:'↓', label:'Lower Total Alkalinity',
+        detail:`TA is ${ta} ppm — high. Target 80–100 ppm.`,
+        action:'Add muriatic acid to lower TA, then aerate aggressively (jets, fountains, waterfall) to raise pH without adding more TA. Multiple doses over several days.',
+        wait:'Multiple sessions — retest daily' });
+    }
+  }
+
+  // pH
+  if (!isNaN(ph)) {
+    if (ph < 7.2) {
+      const delta = 7.4 - ph;
+      const oz = (!isNaN(vol) && vol > 0) ? Math.round((delta / 0.1) * (vol / 10000) * 3.0) + ' oz Soda Ash (pH Up)' : 'soda ash (see Dosing Calculator)';
+      steps.push({ num:2, type:'ph', icon:'↑', label:'Raise pH',
+        detail:`pH is ${ph} — too low. Target 7.4–7.6.`,
+        action:`Add ${oz}. Broadcast across the deep end with pump running.`,
+        wait:'30 min, then retest' });
+    } else if (ph > 7.8) {
+      steps.push({ num:2, type:'ph', icon:'↓', label:'Lower pH',
+        detail:`pH is ${ph} — too high. Target 7.4–7.6.`,
+        action:'Add muriatic acid (or dry acid). Pre-dilute in a bucket of water first. See Dosing Calculator for exact dose based on your TA level.',
+        wait:'30 min, then retest' });
+    }
+  }
+
+  // CYA
+  if (!isNaN(cya)) {
+    if (cya < 30) {
+      const delta = 40 - cya;
+      const dose = (!isNaN(vol) && vol > 0) ? ((delta / 10) * (vol / 10000) * 0.73).toFixed(2) + ' lbs Cyanuric Acid' : 'cyanuric acid (see Dosing Calculator)';
+      steps.push({ num:3, type:'cya', icon:'↑', label:'Add Stabilizer (CYA)',
+        detail:`CYA is ${cya} ppm — low. Target 30–50 ppm (salt pools: 60–80).`,
+        action:`Add ${dose} in a sock hung in the skimmer basket. Dissolves slowly.`,
+        wait:'7–14 days before retesting (dissolves slowly)' });
+    } else if (cya > 80) {
+      const drainPct = Math.round((1 - 50 / cya) * 100);
+      const drainGal = (!isNaN(vol) && vol > 0) ? ` (${Math.round(vol * drainPct / 100).toLocaleString()} gallons)` : '';
+      steps.push({ num:3, type:'cya', icon:'⚠', label:'Lower CYA — Partial Drain Required',
+        detail:`CYA is ${cya} ppm — above 80. No chemical removes CYA.`,
+        action:`Drain and replace approximately ${drainPct}%${drainGal} of pool water. Rebalance all chemistry after refill.`,
+        wait:'After refill — retest and rebalance' });
+    }
+  }
+
+  // CH
+  if (!isNaN(ch)) {
+    if (ch < 150) {
+      const delta = 250 - ch;
+      const dose = (!isNaN(vol) && vol > 0) ? ((delta / 10) * (vol / 10000) * 1.25).toFixed(1) + ' lbs Calcium Chloride' : 'calcium chloride (see Dosing Calculator)';
+      steps.push({ num:4, type:'ch', icon:'↑', label:'Raise Calcium Hardness',
+        detail:`CH is ${ch} ppm — low. Target 200–400 ppm.`,
+        action:`Add ${dose}. ⚠ Pre-dissolve in a bucket of water — extremely exothermic. Pour slowly around pool edge.`,
+        wait:'4 hours before next addition' });
+    } else if (ch > 450) {
+      const drainPct = Math.round((1 - 300 / ch) * 100);
+      steps.push({ num:4, type:'ch', icon:'↓', label:'Lower Calcium Hardness — Dilute',
+        detail:`CH is ${ch} ppm — scaling risk at this level.`,
+        action:`Drain and replace approximately ${drainPct}% of pool water. No chemical lowers CH.`,
+        wait:'After refill — retest and rebalance' });
+    }
+  }
+
+  // SLAM (priority 0 — rendered first despite being added last)
+  if (needsSlam) {
+    const slamCYA = (!isNaN(cya) && cya > 0) ? cya : 40;
+    const slamFC = Math.round(slamCYA * 0.40);
+    const reason = (!isNaN(cc) && cc >= 0.5)
+      ? `CC is ${cc} ppm — combined chlorine indicates contamination. Must shock to breakpoint.`
+      : `FC is ${!isNaN(fc) ? fc : '?'} ppm — critically low vs CYA level.`;
+    steps.unshift({ num:0, type:'slam', icon:'🚨', label:'SLAM Required — Shock to Breakpoint',
+      detail: reason,
+      action:`Raise FC to ${slamFC} ppm (CYA × 40%). Use liquid chlorine or cal-hypo. Test every 4–6 hours and maintain SLAM level until: CC < 0.5, water is visually clear, and OCLT passes (< 1 ppm FC loss overnight).`,
+      wait:'Continue until all 3 pass criteria met before moving to other adjustments' });
+  } else if (!isNaN(fc) && fc < minFC) {
+    const delta = minFC - fc;
+    const doseStr = (!isNaN(vol) && vol > 0) ? (() => {
+      const oz = delta * (vol / 10000) * 12.85;
+      return oz >= 128 ? (oz / 128).toFixed(1) + ' gal' : oz.toFixed(0) + ' fl oz';
+    })() + ' Liquid Chlorine 10%' : 'chlorine (see Dosing Calculator)';
+    steps.push({ num:5, type:'fc', icon:'↑', label:'Add Chlorine',
+      detail:`FC is ${fc} ppm — below minimum target of ${minFC.toFixed(0)} ppm for your CYA level.`,
+      action:`Add ${doseStr}. Distribute around pool perimeter with pump running.`,
+      wait:'15 min circulation, then retest' });
+  }
+
+  if (steps.length === 0) {
+    return setEl('plan-result', `
+      <div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:10px;">✓</div>
+        <p style="color:#166534;font-size:16px;font-weight:900;margin-bottom:6px;">Water is Balanced!</p>
+        <p style="color:#374151;font-size:13px;">All parameters are within target range. No adjustments needed today.</p>
+      </div>`);
+  }
+
+  const typeColors = {
+    slam:{ bg:'#fef2f2', bdr:'#fca5a5', txt:'#991b1b', dot:'#dc2626' },
+    ph:  { bg:'#fffbeb', bdr:'#fcd34d', txt:'#92400e', dot:'#d97706' },
+    ta:  { bg:'#f0f9ff', bdr:'#7dd3fc', txt:'#0369a1', dot:'#0284c7' },
+    cya: { bg:'#faf5ff', bdr:'#d8b4fe', txt:'#6b21a8', dot:'#7c3aed' },
+    ch:  { bg:'#fff7ed', bdr:'#fed7aa', txt:'#9a3412', dot:'#ea580c' },
+    fc:  { bg:'#eff6ff', bdr:'#93c5fd', txt:'#1e40af', dot:'#0369a1' },
+  };
+
+  const slamWarn = needsSlam
+    ? `<div class="warn-box" style="margin-bottom:14px;font-size:12px;">⚠ SLAM condition — complete Step 1 before adjusting pH, TA, or CH. Do not cover pool during SLAM.</div>`
+    : '';
+
+  setEl('plan-result', `
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#0369a1;font-weight:900;font-size:14px;margin-bottom:12px;">Treatment Plan — ${steps.length} step${steps.length !== 1 ? 's' : ''}</p>
+      ${slamWarn}
+      ${steps.map((step, i) => {
+        const c = typeColors[step.type] || typeColors.fc;
+        return `<div style="background:${c.bg};border:1px solid ${c.bdr};border-radius:10px;padding:14px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <div style="width:26px;height:26px;min-width:26px;border-radius:50%;background:${c.dot};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;">${i + 1}</div>
+            <p style="color:${c.txt};font-weight:900;font-size:14px;">${step.label}</p>
+          </div>
+          <p style="color:#374151;font-size:12px;margin-bottom:8px;">${step.detail}</p>
+          <div style="background:rgba(255,255,255,0.75);border-radius:6px;padding:9px 11px;margin-bottom:6px;">
+            <p style="color:#0f172a;font-size:13px;font-weight:600;line-height:1.5;">${step.action}</p>
+          </div>
+          <p style="color:#64748b;font-size:11px;"><strong>Wait:</strong> ${step.wait}</p>
+        </div>`;
+      }).join('')}
+      <p style="color:#94a3b8;font-size:10px;margin-top:8px;">Always add chemicals one at a time with pump running. Retest after each step before proceeding.${!isNaN(vol) && vol > 0 ? ' Volume: ' + Number(vol).toLocaleString() + ' gal.' : ''}</p>
+    </div>`);
+}
+
+// ═══════════════════════════════════════════
+// DRAIN / REFILL CALCULATOR
+// ═══════════════════════════════════════════
+function calcDrainRefill() {
+  const vol     = gf('drain-vol');
+  const current = gf('drain-current');
+  const target  = gf('drain-target');
+  if (isNaN(vol) || vol <= 0)       return setEl('drain-result', errorBox('Enter pool volume.'));
+  if (isNaN(current) || current <= 0) return setEl('drain-result', errorBox('Enter current level.'));
+  if (isNaN(target)  || target <= 0)  return setEl('drain-result', errorBox('Enter target level.'));
+  if (target >= current) return setEl('drain-result', infoBox('Current is already at or below target.', 'No drain needed. Dilution is not required.'));
+  const pct       = (1 - target / current) * 100;
+  const drainGal  = Math.round(vol * pct / 100);
+  const refillGal = drainGal;
+  setEl('drain-result', `
+    <div class="result-wrap">
+      <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Drain Required</p>
+      <p class="result-amount">${pct.toFixed(0)}%</p>
+      <p class="result-alt">${drainGal.toLocaleString()} gallons to drain and refill</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px;text-align:center;">
+          <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;margin-bottom:4px;">Drain Out</p>
+          <p style="color:#991b1b;font-size:18px;font-weight:900;">${drainGal.toLocaleString()}</p>
+          <p style="color:#64748b;font-size:10px;">gallons</p>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;text-align:center;">
+          <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;margin-bottom:4px;">Refill With</p>
+          <p style="color:#166534;font-size:18px;font-weight:900;">${refillGal.toLocaleString()}</p>
+          <p style="color:#64748b;font-size:10px;">gallons fresh</p>
+        </div>
+      </div>
+      <div class="result-note" style="margin-top:12px;">Draining ${pct.toFixed(0)}% reduces level from ${current} → approximately ${Math.round(current * (1 - pct / 100))} ppm. Rebalance all chemistry after refill.</div>
+    </div>`);
+}
+
+// ═══════════════════════════════════════════
+// TURNOVER RATE CALCULATOR
+// ═══════════════════════════════════════════
+function calcTurnoverRate() {
+  const vol = gf('turn-vol');
+  const gpm = gf('turn-gpm');
+  if (isNaN(vol) || vol <= 0) return setEl('turn-result', errorBox('Enter pool volume.'));
+  if (isNaN(gpm) || gpm <= 0) return setEl('turn-result', errorBox('Enter pump flow rate (GPM).'));
+  const hours = vol / (gpm * 60);
+  const isGood = hours <= 8;
+  const isOk   = hours <= 12;
+  const status = isGood ? { label:'Good', color:'#166534', bg:'#f0fdf4', border:'#86efac' }
+               : isOk   ? { label:'Marginal', color:'#92400e', bg:'#fffbeb', border:'#fcd34d' }
+               :           { label:'Too Slow', color:'#991b1b', bg:'#fef2f2', border:'#fca5a5' };
+  const dailyRec = Math.ceil(8 / hours);
+  setEl('turn-result', `
+    <div class="result-wrap">
+      <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Turnover Rate</p>
+      <p class="result-amount">${hours.toFixed(1)} hrs</p>
+      <p class="result-alt">per full pool turnover</p>
+      <div style="background:${status.bg};border:1px solid ${status.border};border-radius:8px;padding:12px;margin-top:12px;text-align:center;">
+        <p style="color:${status.color};font-size:14px;font-weight:900;">${status.label}</p>
+        <p style="color:#374151;font-size:12px;margin-top:4px;">
+          ${isGood ? 'On target. Residential pools need at least 1 full turnover per 8 hours of pump runtime.'
+          : isOk   ? `Run pump at least ${dailyRec > 1 ? dailyRec + ' turnovers/day (extend runtime)' : 'longer daily'}.`
+                   : `Flow rate is too low. Check filter PSI, basket blockage, or impeller wear. Target: ≤ 8 hrs per turnover.`}
+        </p>
+      </div>
+      <p class="result-basis">${vol.toLocaleString()} gal ÷ ${gpm} GPM · Recommended: &le; 8 hrs residential, &le; 6 hrs commercial</p>
+    </div>`);
+}
+
+// ═══════════════════════════════════════════
+// SALT CHLORINATOR REFERENCE
+// ═══════════════════════════════════════════
+function renderSaltSection() {
+  const data = window.SALT_CHLORINATOR_DATA;
+  const brandRows = data.saltTargets.map((b, i) =>
+    `<tr style="background:${i % 2 ? '#f8fafc' : '#ffffff'};">
+       <td style="padding:8px 12px;color:#0f172a;font-size:12px;font-weight:700;">${b.brand}</td>
+       <td style="padding:8px 12px;color:#0369a1;font-size:12px;font-weight:800;">${b.target}</td>
+     </tr>`).join('');
+
+  setEl('salt-section', `
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#f1f5f9;border-bottom:2px solid #e2e8f0;">
+          <th style="padding:8px 12px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Brand</th>
+          <th style="padding:8px 12px;text-align:left;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;">Salt Target</th>
+        </tr></thead>
+        <tbody>${brandRows}</tbody>
+      </table>
+    </div>
+
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      <p style="color:#0369a1;font-size:12px;font-weight:800;">Salt to Raise Level</p>
+      <p style="color:#374151;font-size:12px;margin-top:4px;">0.83 lbs per 1,000 gallons per 100 ppm rise · Test with a digital salt meter, not strips</p>
+      <p style="color:#0369a1;font-size:12px;font-weight:800;margin-top:8px;">CYA Recommendation for Salt Pools</p>
+      <p style="color:#374151;font-size:12px;margin-top:4px;">${data.cyaRecommendation}</p>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#0369a1;font-weight:800;font-size:13px;margin-bottom:10px;">Cell Maintenance</p>
+      ${data.maintenance.map(s => `<p style="color:#374151;font-size:12px;padding:4px 0;display:flex;gap:7px;border-bottom:1px solid #f1f5f9;"><span style="color:#0284c7;flex-shrink:0;">•</span>${s}</p>`).join('')}
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:4px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#92400e;font-weight:800;font-size:13px;margin-bottom:8px;">Low Output Causes</p>
+      ${data.lowOutputCauses.map(s => `<p style="color:#374151;font-size:12px;padding:4px 0;display:flex;gap:7px;"><span style="color:#dc2626;flex-shrink:0;">•</span>${s}</p>`).join('')}
+    </div>`);
+}
+
+// ═══════════════════════════════════════════
+// CHEMICAL SAFETY / DANGER GUIDE
+// ═══════════════════════════════════════════
+function renderDangerSection() {
+  const data = window.CHEM_DANGER_DATA;
+  const sevColor = { deadly:'#991b1b', high:'#92400e' };
+  const sevBg    = { deadly:'#fef2f2', high:'#fffbeb' };
+  const sevBdr   = { deadly:'#fca5a5', high:'#fcd34d' };
+
+  setEl('danger-section', `
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#991b1b;font-weight:900;font-size:13px;margin-bottom:12px;">☠ Never Mix These</p>
+      ${data.neverMix.map(d => `
+        <div style="background:${sevBg[d.severity]};border:1px solid ${sevBdr[d.severity]};border-radius:8px;padding:10px;margin-bottom:8px;">
+          <p style="color:${sevColor[d.severity]};font-size:13px;font-weight:800;margin-bottom:4px;">${d.icon} ${d.combo}</p>
+          <p style="color:#374151;font-size:12px;line-height:1.45;">${d.result}</p>
+        </div>`).join('')}
+    </div>
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <p style="color:#0369a1;font-weight:800;font-size:13px;margin-bottom:10px;">Safe Handling Rules</p>
+      ${data.safeHandling.map(s => `<p style="color:#374151;font-size:12px;padding:4px 0;display:flex;gap:7px;border-bottom:1px solid #f1f5f9;"><span style="color:#0369a1;flex-shrink:0;">✓</span>${s}</p>`).join('')}
+    </div>`);
+}
+
+// ═══════════════════════════════════════════
+// REPORT: LOAD FROM POOL PROFILE
+// ═══════════════════════════════════════════
+function toggleReportPoolPicker() {
+  const picker = document.getElementById('rpt-pool-picker');
+  if (!picker) return;
+  if (picker.style.display !== 'none') { picker.style.display = 'none'; picker.innerHTML = ''; return; }
+  const pools = getPools();
+  if (!pools.length) {
+    picker.style.display = '';
+    picker.innerHTML = `<p style="color:#94a3b8;font-size:13px;text-align:center;padding:8px;">No pools saved yet. Add pools in the Pools tab first.</p>`;
+    return;
+  }
+  picker.style.display = '';
+  picker.innerHTML = `
+    <p style="color:#64748b;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Select Pool to Auto-Fill</p>
+    ${pools.map(p => `
+      <div onclick="loadReportFromPool('${p.id}')"
+           style="padding:10px;border-radius:7px;border:1px solid #e2e8f0;background:#ffffff;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;">
+        <p style="color:#0f172a;font-size:14px;font-weight:700;">${escHtml(p.name)}</p>
+        ${p.address ? `<p style="color:#64748b;font-size:12px;">${escHtml(p.address)}</p>` : ''}
+        ${p.gallons  ? `<p style="color:#0284c7;font-size:11px;">${Number(p.gallons).toLocaleString()} gal</p>` : ''}
+      </div>`).join('')}`;
+}
+
+function loadReportFromPool(poolId) {
+  const pool = getPools().find(p => p.id === poolId);
+  if (!pool) return;
+  const setV = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  setV('rpt-customer', pool.name);
+  setV('rpt-address',  pool.address);
+  if (pool.gallons) onVolumeChange(pool.gallons);
+  const picker = document.getElementById('rpt-pool-picker');
+  if (picker) { picker.style.display = 'none'; picker.innerHTML = ''; }
+  const confirm = document.createElement('div');
+  confirm.className = 'info-box';
+  confirm.style.cssText = 'margin-bottom:10px;font-size:12px;';
+  confirm.textContent = `Loaded: ${pool.name}`;
+  const rptHead = document.getElementById('rpt-pool-picker');
+  if (rptHead) { rptHead.parentNode.insertBefore(confirm, rptHead); setTimeout(() => confirm.remove(), 2500); }
+}
+
+// ═══════════════════════════════════════════
+// OFFLINE STATUS INDICATOR
+// ═══════════════════════════════════════════
+function checkOfflineStatus() {
+  const dot = document.getElementById('offline-dot');
+  if (!dot) return;
+  const setDot = (color, title) => { dot.style.background = color; dot.title = title; };
+  if (!('serviceWorker' in navigator)) return;
+  if (navigator.serviceWorker.controller) {
+    setDot('#4ade80', 'Offline ready — all data cached');
+  } else {
+    navigator.serviceWorker.ready.then(() => {
+      setDot('#4ade80', 'Offline ready — all data cached');
+    }).catch(() => setDot('#fbbf24', 'Caching in progress…'));
+  }
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    setDot('#4ade80', 'Offline ready — all data cached');
+  });
 }
 
 // ═══════════════════════════════════════════

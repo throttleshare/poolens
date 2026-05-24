@@ -414,6 +414,59 @@ window.DE_FILTER_DATA = {
 window.ROUTE_SCHEMA_VERSION = 1; // bump to invalidate old localStorage data if schema changes
 
 // ---------------------------------------------------------------------------
+// Salt Chlorinator Reference Data
+// ---------------------------------------------------------------------------
+window.SALT_CHLORINATOR_DATA = {
+  saltTargets: [
+    { brand:"Hayward AquaRite",        target:"3000–3400 ppm", low:2700, high:3400 },
+    { brand:"Pentair IntelliChlor",    target:"3100–3400 ppm", low:3100, high:3400 },
+    { brand:"Zodiac / Jandy AquaPure", target:"3000–3500 ppm", low:3000, high:3500 },
+    { brand:"CircuPool",               target:"3000–3500 ppm", low:3000, high:3500 },
+    { brand:"Generic / most brands",   target:"2700–3400 ppm", low:2700, high:3400 },
+  ],
+  saltToRaiseFactor: 0.83, // lbs per 1,000 gallons per 100 ppm rise
+  cyaRecommendation: "60–80 ppm (UV degrades chlorine faster without a stabilizer buffer)",
+  maintenance: [
+    "Inspect cell every 3 months — remove and look for calcium buildup on plates",
+    "Acid wash when scale is visible: 4:1 water:muriatic acid, 15 min max, rinse thoroughly",
+    "Check controller output % — low output with adequate salt = scaling or aging cell",
+    "Replace cell every 3–7 years depending on salt level and bather load",
+    "Winterize: remove cell, flush with fresh water, store indoors above freezing",
+    "Never exceed 3,500 ppm — excess salt accelerates corrosion on metal components",
+  ],
+  lowOutputCauses: [
+    "Salt level out of range (test with dedicated salt meter)",
+    "Calcium scale on cell plates (acid wash needed)",
+    "Water temperature below 60°F — cells produce 25–50% less in cold water",
+    "Cell age — efficiency decreases after 3–5 years of service",
+    "Flow switch not sensing adequate flow (check basket, impeller, filter PSI)",
+  ]
+};
+
+// ---------------------------------------------------------------------------
+// Chemical Danger / Safety Reference Data
+// ---------------------------------------------------------------------------
+window.CHEM_DANGER_DATA = {
+  neverMix: [
+    { combo:"Chlorine + Muriatic Acid",         result:"Chlorine gas — immediately life-threatening. Even residue + fumes is dangerous.", icon:"☠", severity:"deadly" },
+    { combo:"Trichlor + Cal-Hypo",              result:"Violent reaction — fire and explosion risk. Never allow these two to contact each other.", icon:"💥", severity:"deadly" },
+    { combo:"Any two chlorine products (dry)",  result:"Different chlorine formulas react dangerously. Always add each product separately into pool water.", icon:"⚠", severity:"high" },
+    { combo:"Chlorine + Ammonia-based algaecide",result:"Produces chloramine gas. Use only PolyQuat (quaternary ammonium) algaecides.", icon:"⚠", severity:"high" },
+    { combo:"Acid + chlorine in confined space", result:"Fumes combine to create chlorine gas — always handle outdoors or in excellent ventilation.", icon:"☠", severity:"deadly" },
+  ],
+  safeHandling: [
+    "Always add chemicals TO water — never add water to concentrated chemicals",
+    "Add one chemical at a time, 15–30 min apart, with pump running",
+    "Never use the same measuring cup for different chemicals without rinsing",
+    "Store acid and chlorine on opposite sides of the storage area — never adjacent",
+    "Keep all chemicals in original, labeled containers with lids sealed",
+    "Wear nitrile gloves and eye protection every time — no exceptions",
+    "Have a water hose ready — flush eyes or skin for 15 min if contact occurs",
+    "Never store pool chemicals near heat sources, open flame, or in direct sunlight",
+  ]
+};
+
+// ---------------------------------------------------------------------------
 // Cartridge Filter Reference Data
 // ---------------------------------------------------------------------------
 window.CARTRIDGE_FILTER_DATA = {
