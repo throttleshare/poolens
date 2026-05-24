@@ -348,3 +348,104 @@ window.OPENING_CHECKLIST = [
     "Check light fixtures for moisture intrusion"
   ]}
 ];
+
+// ---------------------------------------------------------------------------
+// DE Filter Reference Data
+// ---------------------------------------------------------------------------
+window.DE_FILTER_DATA = {
+  // DE charge weight: lbs of DE powder per square foot of filter area
+  // Standard: 1 lb per 10 sq ft (or 1.5 oz per sq ft)
+  chargePerSqFt: { lbs: 0.1, oz: 1.5 },
+
+  // Common DE filter grids by model — sq footage and initial DE charge
+  filters: [
+    { brand:"Hayward", model:"EC40",   sqft:40,  deChargeLbs:4.0,  backwashGPM:60,  noteableFeature:"Vertical grid. Common residential." },
+    { brand:"Hayward", model:"EC50",   sqft:50,  deChargeLbs:5.0,  backwashGPM:75,  noteableFeature:"Vertical grid." },
+    { brand:"Hayward", model:"EC65",   sqft:65,  deChargeLbs:6.5,  backwashGPM:90,  noteableFeature:"Popular mid-size." },
+    { brand:"Hayward", model:"Pro-Grid DE3620", sqft:36, deChargeLbs:3.6, backwashGPM:55, noteableFeature:"Newer vertical grid design." },
+    { brand:"Pentair", model:"FNS Plus 36", sqft:36, deChargeLbs:3.6, backwashGPM:55, noteableFeature:"Easy disassembly. Bump handle." },
+    { brand:"Pentair", model:"FNS Plus 48", sqft:48, deChargeLbs:4.8, backwashGPM:70, noteableFeature:"Most popular Pentair DE." },
+    { brand:"Pentair", model:"FNS Plus 60", sqft:60, deChargeLbs:6.0, backwashGPM:85, noteableFeature:"Large residential/light commercial." },
+    { brand:"Pentair", model:"Quad DE 80", sqft:80, deChargeLbs:8.0, backwashGPM:120, noteableFeature:"4-element cartridge-style DE. No backwash valve needed." },
+    { brand:"Jandy",   model:"DEV48",  sqft:48,  deChargeLbs:4.8,  backwashGPM:70,  noteableFeature:"Vertical grid. Common with Jandy systems." },
+    { brand:"Jandy",   model:"DEV60",  sqft:60,  deChargeLbs:6.0,  backwashGPM:85,  noteableFeature:"Large residential." },
+    { brand:"Sta-Rite",model:"System:3 S8D110", sqft:48, deChargeLbs:4.8, backwashGPM:70, noteableFeature:"Modular design. Easy grid access." },
+    { brand:"Generic", model:"Custom — Calculate", sqft:null, deChargeLbs:null, backwashGPM:null, noteableFeature:"Enter sq footage below to calculate DE charge." }
+  ],
+
+  // How to recharge after backwash
+  recharge: {
+    steps: [
+      "Mix DE powder with water in a bucket to form a slurry BEFORE adding to skimmer",
+      "With pump running on FILTER, slowly pour slurry into skimmer",
+      "Never add dry DE powder directly — clumping damages grids",
+      "After backwash, only add back 80% of original charge (some DE remains on grids)",
+      "After full teardown and hose-off: add 100% of original charge"
+    ],
+    safetyNote: "Wear a dust mask when handling DE powder — silica is a respiratory hazard. Use cellulose alternative (Perlite) if preferred."
+  },
+
+  // Signs grids need replacement
+  gridReplacement: {
+    signs: [
+      "DE powder passing through into pool (cloudy water after recharge)",
+      "Pressure rises faster than normal between backwashes",
+      "Visible tears, holes, or broken frames on grids",
+      "Grids appear matted, caked, or deformed after acid wash",
+      "Manifold cracks or grid manifold is warped"
+    ],
+    interval: "Every 5-7 years residential, annually commercial or with heavy bather loads",
+    acidWash: "Annual acid wash recommended: 1 part muriatic acid to 10 parts water, soak 15 min, rinse thoroughly"
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Route/Day View — Schema Reference
+// ---------------------------------------------------------------------------
+// Route/Day view — stored in localStorage as 'poolens-route'
+// Schema reference (not a window global — stored in localStorage directly):
+// {
+//   date: "2026-05-24",
+//   jobs: [
+//     { id: "timestamp", poolName: "Smith Residence", address: "123 Main St",
+//       time: "09:00", done: false, note: "" }
+//   ]
+// }
+window.ROUTE_SCHEMA_VERSION = 1; // bump to invalidate old localStorage data if schema changes
+
+// ---------------------------------------------------------------------------
+// Cartridge Filter Reference Data
+// ---------------------------------------------------------------------------
+window.CARTRIDGE_FILTER_DATA = {
+  // Common cartridge filters by sq footage
+  filters: [
+    { brand:"Hayward", model:"C900",    sqft:90,   elements:1, cleaningInterval:"Every 3-6 months or 8+ PSI rise" },
+    { brand:"Hayward", model:"C1200",   sqft:120,  elements:1, cleaningInterval:"Every 3-6 months or 8+ PSI rise" },
+    { brand:"Hayward", model:"C1750",   sqft:175,  elements:1, cleaningInterval:"Every 3-6 months or 8+ PSI rise" },
+    { brand:"Pentair", model:"Clean & Clear 100", sqft:100, elements:1, cleaningInterval:"Every 3-6 months" },
+    { brand:"Pentair", model:"Clean & Clear 150", sqft:150, elements:1, cleaningInterval:"Every 3-6 months" },
+    { brand:"Pentair", model:"Clean & Clear Plus 320", sqft:320, elements:4, cleaningInterval:"Every 6 months" },
+    { brand:"Jandy",   model:"CV340",   sqft:340,  elements:4, cleaningInterval:"Every 6 months" },
+    { brand:"Jandy",   model:"CV580",   sqft:580,  elements:4, cleaningInterval:"Every 6-12 months" },
+    { brand:"Sta-Rite",model:"System:3 S8M500", sqft:500, elements:4, cleaningInterval:"Every 6-12 months" }
+  ],
+  cleaning: {
+    steps: [
+      "Turn pump OFF — never remove cartridge under pressure",
+      "Release air pressure via air relief valve before opening",
+      "Remove cartridge — hose off pleats top-to-bottom (never side-to-side — damages pleats)",
+      "Inspect for tears, cracks, collapsed ends, or crushed core",
+      "Soak overnight in cartridge cleaner or 1:10 muriatic acid solution for deep clean",
+      "Rinse thoroughly — no acid residue before reinstalling",
+      "Never use a pressure washer — destroys pleat fabric",
+      "Reinstall — hand-tighten lid only, no tools needed on most models"
+    ],
+    replacementInterval: "Every 1-3 years depending on bather load and chemical balance",
+    signs: [
+      "Pleats torn, frayed, or collapsed",
+      "End caps cracked or separated",
+      "Core crushed or deformed",
+      "Pressure stays high even after cleaning (media is spent)"
+    ]
+  }
+};

@@ -11,6 +11,8 @@ const S = {
   slamType: null,
   clType: 'opening',
   checklists: { opening: {}, closing: {}, weekly: {}, monthly: {} },
+  pool: null,      // currently viewed pool id
+  poolView: 'list', // 'list' | 'detail' | 'new' | 'edit'
 };
 
 const CL_MAP = {
@@ -31,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGuide();
   initReport();
   loadPersistedVolume();
+  initPools();
 });
 
 // ═══════════════════════════════════════════
@@ -927,6 +930,432 @@ function interpMuriatic(ta) {
     }
   }
   return f[100];
+}
+
+// ═══════════════════════════════════════════
+// POOLS — CUSTOMER PROFILES
+// ═══════════════════════════════════════════
+const POOLS_KEY = 'poolens-pools';
+
+function getPools() {
+  try { return JSON.parse(localStorage.getItem(POOLS_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function savePools(pools) {
+  localStorage.setItem(POOLS_KEY, JSON.stringify(pools));
+}
+
+function initPools() {
+  renderPoolList();
+}
+
+// ─── POOL LIST VIEW ───────────────────────
+function renderPoolList() {
+  S.poolView = 'list';
+  S.pool = null;
+  const pools = getPools();
+  const container = document.getElementById('pools-content');
+  if (!container) return;
+
+  if (pools.length === 0) {
+    container.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <p style="color:#0369a1;font-weight:900;font-size:16px;">My Pools</p>
+      </div>
+      <div style="text-align:center;padding:48px 16px 32px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" style="margin:0 auto 16px;display:block;"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <p style="font-size:16px;color:#475569;font-weight:700;margin-bottom:6px;">No pools saved yet</p>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:22px;">Save customer profiles with chemistry history.</p>
+        <button onclick="renderPoolForm(null)" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:white;border:none;border-radius:10px;padding:13px 28px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.03em;">+ Add Your First Pool</button>
+      </div>`;
+    return;
+  }
+
+  const cards = pools.map(p => {
+    const lastDate = p.history && p.history.length
+      ? `Last service: ${p.history[p.history.length - 1].date}`
+      : 'No service history yet';
+    const gallonsDisplay = p.gallons ? Number(p.gallons).toLocaleString() + ' gal' : '';
+    return `
+      <div class="pool-card" onclick="renderPoolDetail('${p.id}')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div class="pool-card-name">${escHtml(p.name)}</div>
+            ${p.address ? `<div class="pool-card-meta" style="margin-bottom:3px;">${escHtml(p.address)}</div>` : ''}
+            <div class="pool-card-meta">${[p.type, p.sanitizer, gallonsDisplay].filter(Boolean).join(' · ')}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:4px;"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
+          <span style="color:#64748b;font-size:11px;">${lastDate}</span>
+          ${p.history && p.history.length ? `<span style="color:#0369a1;font-size:11px;font-weight:700;float:right;">${p.history.length} reading${p.history.length !== 1 ? 's' : ''}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <p style="color:#0369a1;font-weight:900;font-size:16px;">My Pools</p>
+      <button onclick="renderPoolForm(null)" style="background:#0369a1;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:0.03em;">+ New Pool</button>
+    </div>
+    ${cards}`;
+}
+
+// ─── POOL DETAIL VIEW ─────────────────────
+function renderPoolDetail(id) {
+  S.poolView = 'detail';
+  S.pool = id;
+  const pools = getPools();
+  const p = pools.find(x => x.id === id);
+  if (!p) { renderPoolList(); return; }
+
+  const historyHtml = (() => {
+    if (!p.history || p.history.length === 0) {
+      return `<p style="color:#94a3b8;font-size:13px;padding:14px 0;text-align:center;">No readings saved yet.</p>`;
+    }
+    const sorted = [...p.history].reverse().slice(0, 20);
+    return sorted.map((r, i) => {
+      const uid = `reading-${id}-${i}`;
+      const dateStr = r.date || '';
+      const summary = [
+        r.fc  != null ? `FC ${r.fc}`  : '',
+        r.ph  != null ? `pH ${r.ph}`  : '',
+        r.ta  != null ? `TA ${r.ta}`  : '',
+        r.cya != null ? `CYA ${r.cya}` : '',
+      ].filter(Boolean).join('  ');
+      return `
+        <div class="pool-reading-row" onclick="toggleReadingDetail('${uid}')">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <span style="color:#0f172a;font-size:13px;font-weight:700;">${dateStr}</span>
+              ${r.note ? `<span style="color:#64748b;font-size:11px;margin-left:8px;">· ${escHtml(r.note)}</span>` : ''}
+            </div>
+            <svg id="rchev-${uid}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <p style="color:#64748b;font-size:12px;margin-top:4px;">${summary}</p>
+          <div id="${uid}" class="pool-reading-detail">
+            ${poolReadingDetailGrid(r)}
+          </div>
+        </div>`;
+    }).join('');
+  })();
+
+  const container = document.getElementById('pools-content');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <button onclick="renderPoolList()" style="background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;color:#374151;font-size:13px;font-weight:700;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <p style="color:#0369a1;font-weight:900;font-size:16px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(p.name)}</p>
+      <button onclick="renderPoolForm('${id}')" style="background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;color:#374151;font-size:12px;font-weight:700;">Edit</button>
+    </div>
+
+    <!-- Info pills -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+      ${p.gallons ? poolPill(Number(p.gallons).toLocaleString() + ' gal') : ''}
+      ${p.type    ? poolPill(p.type)    : ''}
+      ${p.filter  ? poolPill(p.filter + (p.filterDia ? ' ' + p.filterDia + '"' : '') + ' filter') : ''}
+      ${p.sanitizer ? poolPill(p.sanitizer) : ''}
+    </div>
+
+    ${p.heater ? `
+      <div class="pool-form-panel" style="padding:12px;margin-bottom:10px;">
+        <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Equipment</p>
+        <p style="color:#0f172a;font-size:13px;">${escHtml(p.heater)}</p>
+      </div>` : ''}
+
+    <!-- Notes -->
+    <div class="pool-form-panel" style="padding:12px;margin-bottom:14px;">
+      <p style="color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Notes</p>
+      <textarea id="pool-notes-ta" class="pool-textarea" rows="3" placeholder="Gate code, special instructions…" onblur="savePoolNotes('${id}')">${escHtml(p.notes || '')}</textarea>
+    </div>
+
+    <!-- Use in Dosing -->
+    ${p.gallons ? `
+    <button class="btn-outline-blue" style="margin-bottom:14px;" onclick="usePoolInDosing(${Number(p.gallons)})">
+      → Use ${Number(p.gallons).toLocaleString()} gal in Dosing Calculator
+    </button>` : ''}
+
+    <!-- Chemistry History -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <p style="color:#0369a1;font-weight:900;font-size:15px;">Chemistry History</p>
+      <button onclick="showChemForm('${id}')" style="background:#eff6ff;border:1px solid #93c5fd;color:#0369a1;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;">+ Save Today</button>
+    </div>
+
+    <div id="chem-form-wrap-${id}"></div>
+
+    <div id="history-list-${id}">
+      ${historyHtml}
+    </div>
+
+    <hr class="section-div">
+    <button class="btn-delete" onclick="deletePool('${id}')">Delete Pool</button>
+    <div style="height:8px;"></div>`;
+}
+
+function poolPill(text) {
+  return `<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:4px 11px;font-size:12px;font-weight:700;color:#374151;">${escHtml(text)}</span>`;
+}
+
+function poolReadingDetailGrid(r) {
+  const fields = [
+    ['FC', r.fc], ['CC', r.cc], ['pH', r.ph],
+    ['TA', r.ta], ['CH', r.ch], ['CYA', r.cya],
+  ];
+  return fields.filter(([,v]) => v != null && v !== '').map(([label, val]) =>
+    `<div style="background:#f8fafc;border-radius:6px;padding:8px;text-align:center;">
+       <p style="color:#64748b;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;">${label}</p>
+       <p style="color:#0f172a;font-size:16px;font-weight:900;margin-top:2px;">${val}</p>
+     </div>`
+  ).join('') +
+  (r.note ? `<div style="grid-column:1/-1;background:#eff6ff;border-radius:6px;padding:8px;font-size:12px;color:#0369a1;margin-top:2px;">${escHtml(r.note)}</div>` : '');
+}
+
+function toggleReadingDetail(uid) {
+  const el   = document.getElementById(uid);
+  const chev = document.getElementById(`rchev-${uid}`);
+  if (!el) return;
+  const open = el.classList.toggle('open');
+  if (chev) chev.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function savePoolNotes(id) {
+  const ta = document.getElementById('pool-notes-ta');
+  if (!ta) return;
+  const pools = getPools();
+  const p = pools.find(x => x.id === id);
+  if (!p) return;
+  p.notes = ta.value;
+  savePools(pools);
+}
+
+// ─── CHEM READING FORM ────────────────────
+function showChemForm(poolId) {
+  const wrap = document.getElementById(`chem-form-wrap-${poolId}`);
+  if (!wrap) return;
+  const today = new Date().toISOString().split('T')[0];
+  wrap.innerHTML = `
+    <div class="inline-chem-form" id="chem-form-inner-${poolId}">
+      <p style="color:#0369a1;font-weight:800;font-size:13px;margin-bottom:12px;">Save Reading</p>
+      <div class="field-group">
+        <label class="field-label">Date</label>
+        <input type="date" id="cf-date-${poolId}" value="${today}" style="color-scheme:light;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div><label class="field-label">FC</label><input type="number" id="cf-fc-${poolId}" placeholder="—" inputmode="decimal" step="0.1" min="0"></div>
+        <div><label class="field-label">CC</label><input type="number" id="cf-cc-${poolId}" placeholder="—" inputmode="decimal" step="0.1" min="0"></div>
+        <div><label class="field-label">pH</label><input type="number" id="cf-ph-${poolId}" placeholder="—" inputmode="decimal" step="0.1" min="0"></div>
+        <div><label class="field-label">TA</label><input type="number" id="cf-ta-${poolId}" placeholder="—" inputmode="decimal" min="0"></div>
+        <div><label class="field-label">CH</label><input type="number" id="cf-ch-${poolId}" placeholder="—" inputmode="decimal" min="0"></div>
+        <div><label class="field-label">CYA</label><input type="number" id="cf-cya-${poolId}" placeholder="—" inputmode="decimal" min="0"></div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Note (optional)</label>
+        <textarea id="cf-note-${poolId}" class="pool-textarea" rows="2" placeholder="Backwashed filter, added shock…"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button onclick="saveChemReading('${poolId}')" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:white;border:none;border-radius:9px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">Save</button>
+        <button onclick="cancelChemForm('${poolId}')" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;border-radius:9px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function cancelChemForm(poolId) {
+  const wrap = document.getElementById(`chem-form-wrap-${poolId}`);
+  if (wrap) wrap.innerHTML = '';
+}
+
+function saveChemReading(poolId) {
+  const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const getF = id => { const v = parseFloat(get(id)); return isNaN(v) ? null : v; };
+
+  const date = get(`cf-date-${poolId}`) || new Date().toISOString().split('T')[0];
+  const fc   = getF(`cf-fc-${poolId}`);
+  const cc   = getF(`cf-cc-${poolId}`);
+  const ph   = getF(`cf-ph-${poolId}`);
+  const ta   = getF(`cf-ta-${poolId}`);
+  const ch   = getF(`cf-ch-${poolId}`);
+  const cya  = getF(`cf-cya-${poolId}`);
+  const note = get(`cf-note-${poolId}`);
+
+  if ([fc, cc, ph, ta, ch, cya].every(v => v === null)) {
+    alert('Enter at least one reading value.');
+    return;
+  }
+
+  const reading = { date };
+  if (fc  !== null) reading.fc  = fc;
+  if (cc  !== null) reading.cc  = cc;
+  if (ph  !== null) reading.ph  = ph;
+  if (ta  !== null) reading.ta  = ta;
+  if (ch  !== null) reading.ch  = ch;
+  if (cya !== null) reading.cya = cya;
+  if (note) reading.note = note;
+
+  const pools = getPools();
+  const p = pools.find(x => x.id === poolId);
+  if (!p) return;
+  if (!p.history) p.history = [];
+  p.history.push(reading);
+  // Cap at 100 readings (newest kept)
+  if (p.history.length > 100) p.history = p.history.slice(-100);
+  savePools(pools);
+  renderPoolDetail(poolId);
+}
+
+// ─── NEW / EDIT POOL FORM ─────────────────
+function renderPoolForm(id) {
+  S.poolView = id ? 'edit' : 'new';
+  const pools = getPools();
+  const p = id ? pools.find(x => x.id === id) : null;
+
+  const v = (field, fallback = '') => p ? (p[field] != null ? p[field] : fallback) : fallback;
+  const sel = (field, value) => v(field) === value ? 'selected' : '';
+
+  const container = document.getElementById('pools-content');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <button onclick="${id ? `renderPoolDetail('${id}')` : 'renderPoolList()'}" style="background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;color:#374151;font-size:13px;font-weight:700;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <p style="color:#0369a1;font-weight:900;font-size:16px;">${id ? 'Edit Pool' : 'New Pool'}</p>
+    </div>
+
+    <div class="pool-form-panel">
+      <div class="field-group">
+        <label class="field-label">Pool Name <span style="color:#dc2626;">*</span></label>
+        <input type="text" id="pf-name" placeholder="e.g. Smith Residence" value="${escAttr(v('name'))}">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Address</label>
+        <input type="text" id="pf-address" placeholder="123 Main St" value="${escAttr(v('address'))}">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Pool Volume (gallons) <span style="color:#dc2626;">*</span></label>
+        <input type="number" id="pf-gallons" placeholder="e.g. 15000" min="100" inputmode="decimal" value="${v('gallons')}">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Pool Type</label>
+        <select id="pf-type">
+          <option value="">— Select —</option>
+          <option value="Inground Gunite" ${sel('type','Inground Gunite')}>Inground Gunite</option>
+          <option value="Inground Vinyl" ${sel('type','Inground Vinyl')}>Inground Vinyl</option>
+          <option value="Inground Fiberglass" ${sel('type','Inground Fiberglass')}>Inground Fiberglass</option>
+          <option value="Above Ground" ${sel('type','Above Ground')}>Above Ground</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Sanitizer</label>
+        <select id="pf-sanitizer">
+          <option value="">— Select —</option>
+          <option value="Chlorine" ${sel('sanitizer','Chlorine')}>Chlorine</option>
+          <option value="Salt" ${sel('sanitizer','Salt')}>Salt</option>
+          <option value="Bromine" ${sel('sanitizer','Bromine')}>Bromine</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Filter Type</label>
+        <select id="pf-filter" onchange="toggleFilterDia()">
+          <option value="">— Select —</option>
+          <option value="Sand" ${sel('filter','Sand')}>Sand</option>
+          <option value="Cartridge" ${sel('filter','Cartridge')}>Cartridge</option>
+          <option value="DE" ${sel('filter','DE')}>DE (Diatomaceous Earth)</option>
+        </select>
+      </div>
+      <div class="field-group" id="pf-dia-wrap" style="${['Sand','DE'].includes(v('filter')) ? '' : 'display:none;'}">
+        <label class="field-label">Filter Tank Diameter (inches)</label>
+        <input type="number" id="pf-filterDia" placeholder="e.g. 24" min="10" max="48" inputmode="decimal" value="${v('filterDia')}">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Heater / Equipment</label>
+        <input type="text" id="pf-heater" placeholder="e.g. Hayward H250" value="${escAttr(v('heater'))}">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Notes</label>
+        <textarea id="pf-notes" class="pool-textarea" rows="3" placeholder="Gate code, special instructions…">${escHtml(v('notes'))}</textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+        <button onclick="savePool('${id || ''}')" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:white;border:none;border-radius:10px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">Save Pool</button>
+        <button onclick="${id ? `renderPoolDetail('${id}')` : 'renderPoolList()'}" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;border-radius:10px;padding:13px;font-weight:700;font-size:14px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function toggleFilterDia() {
+  const sel = document.getElementById('pf-filter');
+  const wrap = document.getElementById('pf-dia-wrap');
+  if (!sel || !wrap) return;
+  wrap.style.display = ['Sand', 'DE'].includes(sel.value) ? '' : 'none';
+}
+
+function savePool(id) {
+  const name = (document.getElementById('pf-name')?.value || '').trim();
+  if (!name) { alert('Pool name is required.'); return; }
+
+  const gallonsRaw = document.getElementById('pf-gallons')?.value;
+  const gallons = gallonsRaw ? parseInt(gallonsRaw, 10) : null;
+
+  const pool = {
+    name,
+    address:    (document.getElementById('pf-address')?.value   || '').trim(),
+    gallons:    gallons || null,
+    type:        document.getElementById('pf-type')?.value      || '',
+    sanitizer:   document.getElementById('pf-sanitizer')?.value || '',
+    filter:      document.getElementById('pf-filter')?.value    || '',
+    filterDia:   parseInt(document.getElementById('pf-filterDia')?.value || '0') || null,
+    heater:     (document.getElementById('pf-heater')?.value    || '').trim(),
+    notes:      (document.getElementById('pf-notes')?.value     || '').trim(),
+  };
+
+  const pools = getPools();
+  if (id) {
+    const idx = pools.findIndex(x => x.id === id);
+    if (idx !== -1) {
+      pool.id = id;
+      pool.history = pools[idx].history || [];
+      pools[idx] = pool;
+    }
+  } else {
+    pool.id = String(Date.now());
+    pool.history = [];
+    pools.push(pool);
+  }
+  savePools(pools);
+  renderPoolDetail(pool.id);
+}
+
+// ─── DELETE POOL ──────────────────────────
+function deletePool(id) {
+  if (!confirm('Delete this pool profile and all its history? This cannot be undone.')) return;
+  const pools = getPools().filter(x => x.id !== id);
+  savePools(pools);
+  renderPoolList();
+}
+
+// ─── USE POOL IN DOSING ───────────────────
+function usePoolInDosing(gallons) {
+  const el = document.getElementById('dose-volume');
+  if (el) { el.value = gallons; onVolumeChange(gallons); }
+  showTab('dosing');
+}
+
+// ─── POOL HTML HELPERS ────────────────────
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escAttr(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function copyText(text, btn) {
