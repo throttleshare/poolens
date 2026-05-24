@@ -273,6 +273,78 @@ window.ERROR_DB = {
             fix:["Check water level and suction line","Open all valves","Check for air leaks"],
             severity:"medium", callpro:false }
         ]
+      },
+
+      "JXi Gas Heater": {
+        models:["JXi 150","JXi 200","JXi 260","JXi 340","JXi 400","JXi 150N","JXi 200N","JXi 260N","JXi 340N","JXi 400N"],
+        codes:[
+          { code:"E01", name:"Ignition Failure",
+            causes:["Gas supply off or too low","Faulty hot surface igniter (HSI)","Dirty flame sensor","Gas valve not opening","Flue backpressure (installation clearance issue)"],
+            fix:["Verify gas shutoff valve is open","Check manifold gas pressure (3.5\" WC natural, 10\" LP)","Inspect HSI — should glow bright orange, replace if cracked or dim","Clean flame rod with fine emery cloth","Check flue clearance from walls — minimum per install manual","JXi auto-retries 3x then locks out; hold MODE to reset lockout"],
+            severity:"high", callpro:true },
+          { code:"E02", name:"High Limit Fault",
+            causes:["Insufficient water flow to heat exchanger","Filter pressure high / dirty filter","Closed valves restricting flow","High limit switch tripped or failed","Scale in heat exchanger tubes"],
+            fix:["Verify pump running at adequate flow rate","Backwash or clean filter","Open all return valves fully","Allow 15-minute cooldown before reset","Inspect heat exchanger for scale; descale if flow history shows inadequate water treatment"],
+            severity:"high", callpro:false },
+          { code:"E03", name:"Pressure / Flow Switch Fault",
+            causes:["Pump not running or losing prime","Low water level","Closed suction valve","Clogged pump basket or impeller","Pressure switch failure"],
+            fix:["Confirm pump is running and primed","Check skimmer water level","Open all suction valves","Clean pump basket and inspect impeller","Test pressure switch — should close with adequate flow; replace if stuck open"],
+            severity:"high", callpro:false },
+          { code:"E04", name:"Water Temperature Sensor Fault",
+            causes:["Water temp sensor (thermistor) failed open or shorted","Corroded sensor wiring connector","Moisture in control board connector"],
+            fix:["Test sensor resistance — JXi sensor reads ~10kΩ at 77°F (25°C)","Check sensor wiring harness connector for green corrosion","Replace sensor if resistance is infinite (open) or near zero (short)"],
+            severity:"medium", callpro:true },
+          { code:"E05", name:"Stack / Flue Temperature Fault",
+            causes:["Blocked or restricted flue exhaust","Recirculating combustion gases (wind, enclosure)","Insufficient combustion air","Dirty burner tray"],
+            fix:["Clear any obstruction from flue outlet","Verify minimum clearances to walls and roof (per install guide)","Inspect burner tray for debris and carbon buildup","Ensure combustion air supply — sealed rooms require dedicated air vent"],
+            severity:"high", callpro:true },
+          { code:"E06", name:"Gas Valve Fault",
+            causes:["Gas valve coil open or shorted","24V not reaching gas valve","Gas valve failed mechanically closed"],
+            fix:["Measure 24VAC at gas valve terminals during startup — no voltage = control board issue","Test gas valve coil resistance (typically 20–50Ω) — open or shorted = replace valve","Do not bypass gas valve"],
+            severity:"high", callpro:true },
+          { code:"E07", name:"Communication / Board Fault",
+            causes:["Control board failure","Display cable loose","Moisture ingress on board"],
+            fix:["Check display ribbon cable at both connectors","Inspect control board for burn marks or moisture","If board appears clean: replace control board"],
+            severity:"high", callpro:true },
+          { code:"SFS", name:"Service Filter Switch",
+            causes:["Filter differential pressure too high (dirty filter)"],
+            fix:["Backwash sand/DE filter or clean cartridge","Code resets automatically after filter service"],
+            severity:"low", callpro:false },
+          { code:"AGS", name:"Auto Gas Shutoff",
+            causes:["Heater idle for extended period — normal safety timeout"],
+            fix:["Press MODE to restart — this is a normal safety feature, not a fault"],
+            severity:"low", callpro:false },
+          { code:"SNSR", name:"Sensor Error",
+            causes:["Water temperature sensor failed open or shorted","Wiring harness fault"],
+            fix:["Test thermistor resistance (~10kΩ at 77°F)","Inspect and re-seat wiring connector at control board","Replace sensor if out of spec"],
+            severity:"medium", callpro:true },
+          { code:"LOC", name:"Service Lockout Active",
+            causes:["Multiple fault trips locked out the heater","Prior fault was not resolved before reset"],
+            fix:["Diagnose and repair the underlying fault first","Reset lockout: hold MODE button for 5 seconds on most JXi models","Unit will not restart until root cause is fixed"],
+            severity:"high", callpro:true },
+          { code:"HLS", name:"High Limit Switch",
+            causes:["Water temperature exceeded high limit (typically 135°F)","High limit switch failed","Same flow restriction causes as E02"],
+            fix:["Allow full cooldown (20-30 min) before reset","Verify water flow before restarting","Test HLS switch resistance — should read 0Ω when cool; replace if open"],
+            severity:"high", callpro:true }
+        ]
+      },
+
+      "iAqualink Automation": {
+        models:["iAqualink 2.0","iAqualink 3.0","iAqualink RS","AquaLink RS"],
+        codes:[
+          { code:"No Comms", name:"Communication Loss",
+            causes:["RS-485 data cable wiring fault","Incorrect DIP switch addresses","Power issue at controller","Sub-panel or ancillary board offline"],
+            fix:["Check RS-485 data cable from main board to sub-panels — verify wire order","Inspect DIP switch addresses on all sub-panels (must be unique, must match programming)","Cycle power to controller and all sub-panels","Check all terminal block wire connections for loose strands"],
+            severity:"high", callpro:true },
+          { code:"Offline in app", name:"iAqualink Offline",
+            causes:["Wi-Fi password changed","Router IP changed","iAqualink module lost network","DHCP lease expired"],
+            fix:["Re-connect iAqualink to Wi-Fi via iAqualink app (Add Device flow)","Assign static IP to iAqualink in router","Check iAqualink module LED status — solid green = connected, blinking = connecting, red = fault","Power cycle the iAqualink module"],
+            severity:"medium", callpro:false },
+          { code:"Freeze Protection On", name:"Freeze Protection Active",
+            causes:["Air temperature sensor below freeze threshold","Normal freeze protection activation"],
+            fix:["Normal system behavior — all equipment runs until temp rises above threshold","Do NOT override or disable freeze protection during freezing weather","Verify freeze sensor is installed correctly (in shade, not in sun)"],
+            severity:"low", callpro:false }
+        ]
       }
     }
   },
@@ -639,6 +711,88 @@ window.ERROR_DB = {
             causes:["Pump is in priming mode at startup — normal display during first 10 minutes"],
             fix:["Normal — allow up to 10 minutes for pump to prime","If PRIMING display persists beyond 10 minutes, fault converts to E11 — see E11 diagnosis"],
             severity:"low", callpro:false }
+        ]
+      }
+    }
+  },
+
+  hayward_swg: {
+    label: "Hayward Salt (TurboCell / AquaRite)",
+    color: "#1d4ed8",
+    categories: {
+
+      "AquaRite / AquaRite Pro / TurboCell": {
+        models:["AquaRite","AquaRite Pro","AquaRite S3","AquaRite XL","TurboCell T-3","TurboCell T-5","TurboCell T-9","TurboCell T-15","GLX-CELL-3","GLX-CELL-5","GLX-CELL-9","GLX-CELL-15"],
+        codes:[
+          { code:"No Flow", name:"Flow Not Detected",
+            causes:["Pump not running or losing prime","Flow switch dirty or failed","Low water flow (pump speed too low on VSP)","Flow switch bypass jumper installed (check for misuse)"],
+            fix:["Verify pump is running — AquaRite requires flow to generate chlorine","Clean flow switch paddle with white vinegar (calcium buildup stops paddle from moving)","On VSP: ensure pump speed is high enough for adequate flow through cell","Test flow switch — it should read closed when water flowing; replace if stuck open or closed"],
+            severity:"high", callpro:false },
+          { code:"Check Cell", name:"Cell Inspection Required",
+            causes:["High calcium buildup on cell plates (most common)","Cell has reached end of life (average 5-7 years / 10,000 hrs)","Cell cable loose or corroded","Cell damaged — cracked housing or bent plates"],
+            fix:["Inspect cell — if white calcium scale visible, perform acid wash: soak in 4:1 water-to-muriatic acid for 15 minutes, rinse thoroughly","Do NOT scrub cell plates — acid is the only safe cleaning method","Check cell cable connection at control box — wiggle while reading diagnostic output","Replace cell if acid wash doesn't resolve, cell is >7 years old, or plates appear damaged"],
+            severity:"medium", callpro:false },
+          { code:"Check Salt", name:"Low Salt Level",
+            causes:["Salt level below minimum operating threshold (AquaRite target: 2700-3400 ppm, min 2700 ppm)","Salt sensor dirty (calcium on sensor = false low reading)","Cell producing less as it ages (cells become less efficient at detection near end of life)","Recent heavy rain diluting pool water"],
+            fix:["Test salt level with quality test kit or strips — AquaRite display can read 200-400 ppm low or high","Add pool salt (evaporated, NOT rock salt or iodized table salt) if level confirmed low","Clean salt sensor with vinegar","If salt tests correct but code persists: replace cell or AquaRite sensor board"],
+            severity:"medium", callpro:false },
+          { code:"High Salt", name:"Salt Level Too High",
+            causes:["Over-dosed salt addition","Insufficient water in pool when salt added","Salt sensor reading error"],
+            fix:["Test salt with independent kit to confirm true reading","If salt is genuinely >4500 ppm: partially drain and refill pool with fresh water","Do not add more salt — cell will not operate above 5000 ppm"],
+            severity:"medium", callpro:false },
+          { code:"Cold Water", name:"Water Temperature Below Operating Range",
+            causes:["Water temp below 50°F — AquaRite stops generating chlorine below 50°F","Normal seasonal shutdown"],
+            fix:["Normal cold-weather behavior — supplement with liquid chlorine during cold spells","Unit will resume normal operation when water temp exceeds 50°F"],
+            severity:"low", callpro:false },
+          { code:"Low Output", name:"Chlorine Output Below Setpoint",
+            causes:["Cell approaching end of life (production decreases over time)","Salt level slightly low","CYA too high (masks FC reading — pool may be adequately chlorinated)","Setpoint too low for bather load or pool size"],
+            fix:["Run cell inspection diagnostic — compare cell amps to expected output for cell size","Increase output setpoint by 10% and monitor FC","Test true FC with Taylor K-2006 or FAS-DPD — strip tests are unreliable for SWG pools","Replace cell if amps consistently below 1A on cell diagnostic"],
+            severity:"medium", callpro:false },
+          { code:"Inspect Cell (Blinking)", name:"Cell Approaching End of Life",
+            causes:["AquaRite meter has tracked cumulative runtime suggesting cell near replacement","This is a time-based alert, not a chemical alert"],
+            fix:["Perform cell inspection — acid wash if calcium buildup is visible","If cell passes visual/acid test: reset the meter via AquaRite service menu","Replace cell if visual inspection shows worn or bent plates"],
+            severity:"low", callpro:false }
+        ]
+      }
+    }
+  },
+
+  pentair_automation: {
+    label: "Pentair Automation (IntelliTouch / EasyTouch)",
+    color: "#0369a1",
+    categories: {
+
+      "IntelliTouch / EasyTouch Automation": {
+        models:["IntelliTouch i5+3","IntelliTouch i7+3","IntelliTouch i9+3","EasyTouch 4","EasyTouch 8","EasyTouch PL4","EasyTouch PL8","IntelliCenter"],
+        codes:[
+          { code:"No Comms (Pump)", name:"Pump Communication Lost",
+            causes:["RS-485 data cable wiring fault between control panel and pump","Wrong DIP switch address on pump","Cable length too long or damaged","IntelliTouch firmware mismatch with newer IntelliFlo"],
+            fix:["Check RS-485 cable color order at both ends — must be consistent (A/B/GND wiring specific to Pentair protocol)","Verify pump address DIP switches match assignment in IntelliTouch programming (Pump 1 = address 1, etc.)","Cable max: 1000ft for RS-485, but real-world limit is often 300ft — check for splices or sharp bends","Cycle power to both the control panel and the pump; wait 60 seconds for comms to re-establish"],
+            severity:"high", callpro:true },
+          { code:"Heater Fault", name:"Heater Communication / Control Fault",
+            causes:["RS-485 cable fault between IntelliTouch and MasterTemp/Max-E-Therm","Heater board failed","Heater not getting 24VAC from IntelliTouch relay"],
+            fix:["Check 24VAC output at IntelliTouch heater relay when heat is called","Test RS-485 cable from IntelliTouch to heater fireman switch interface","Inspect heater control board for burn marks or moisture","Re-pair heater in IntelliTouch programming (Heater → Protocol → Configure)"],
+            severity:"high", callpro:true },
+          { code:"IntelliChlor Fault", name:"Salt Cell Communication Error",
+            causes:["RS-485 cable fault between IntelliTouch and IntelliChlor SCG","IntelliChlor cell or power center failure","Programming not assigned"],
+            fix:["Check RS-485 data cable between IntelliTouch output board and IntelliChlor power center","Verify IntelliChlor is assigned in IntelliTouch programming","Test IntelliChlor independently — power center should show diagnostic lights"],
+            severity:"medium", callpro:true },
+          { code:"Freeze Protection", name:"Freeze Protection Active",
+            causes:["Air temperature sensor reading below freeze threshold (default 36°F)","Freeze sensor location in direct sun causing false reading","Normal cold weather activation"],
+            fix:["Normal behavior — all assigned freeze protection loads run until temp rises above threshold","If triggering falsely in warm weather: relocate freeze sensor to shaded area away from sun","Check freeze sensor wire integrity — open circuit = always triggers freeze protection"],
+            severity:"low", callpro:false },
+          { code:"Panel Offline", name:"Control Panel Not Responding",
+            causes:["Power loss to control panel","Main breaker tripped","Control board failure","Display cable fault"],
+            fix:["Check 240VAC supply at panel and incoming breaker","Verify 24VAC transformer output on control board (common fault point — transformers fail)","Inspect display cable from indoor panel to control box","IntelliCenter: check network connection if programming via app"],
+            severity:"high", callpro:true },
+          { code:"Valve Fault", name:"Valve Actuator Not Responding",
+            causes:["Valve actuator motor failed","End stop switches inside actuator failed","Valve handle stuck (seized actuator)","Actuator not assigned in programming"],
+            fix:["Manually operate valve — if valve turns freely by hand but actuator doesn't: actuator motor failed","Test actuator with jumper — apply 24VAC directly to actuator motor terminals and observe rotation","Check end stop switches inside actuator — small micro-switches that signal position","Program actuator assignment in IntelliTouch if recently added"],
+            severity:"medium", callpro:false },
+          { code:"Dim / No Display", name:"Touchscreen or Display Failure",
+            causes:["Display backlight failing (common on IntelliTouch i-Series)","Screen damage from UV exposure","Cable connection loose"],
+            fix:["IntelliTouch indoor display is NOT waterproof — moisture ingress kills screens; replace if water got in","Check display cable at back of touchscreen and at control box","Screens are available as replacement parts (EasyTouch indoor/outdoor, IntelliTouch color touchscreen)","IntelliCenter: verify Ethernet cable and power to IntelliCenter controller"],
+            severity:"medium", callpro:false }
         ]
       }
     }

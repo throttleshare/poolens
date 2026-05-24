@@ -1,5 +1,5 @@
-const CACHE = 'poolens-v4';
-const ASSETS = ['/', '/index.html', '/js/errors.js', '/js/data.js', '/js/app.js', '/favicon.svg'];
+const CACHE = 'splashlens-v1';
+const ASSETS = ['/', '/index.html', '/js/errors.js', '/js/data.js', '/js/app.js', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

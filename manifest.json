@@ -1,13 +1,32 @@
 {
-  "name": "PoolLens Field Reference",
-  "short_name": "PoolLens",
-  "description": "Pool service tech field reference — error codes, dosing calculator, checklists",
+  "name": "SplashLens Field Reference",
+  "short_name": "SplashLens",
+  "description": "Pool service tech field reference - error codes, dosing calculators, AI scanner, SLAM tracker, filter guides, checklists. Works offline.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f0f9ff",
   "theme_color": "#0284c7",
   "orientation": "portrait-primary",
+  "categories": ["utilities", "productivity"],
+  "lang": "en-US",
   "icons": [
     { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Error Code Lookup",
+      "url": "/?tab=errors",
+      "description": "Search 500+ pool equipment error codes"
+    },
+    {
+      "name": "Chemical Dosing",
+      "url": "/?tab=dosing",
+      "description": "Calculate chemical doses for your pool"
+    },
+    {
+      "name": "AI Scanner",
+      "url": "/?tab=scan",
+      "description": "Scan error codes or identify parts with AI"
+    }
   ]
 }

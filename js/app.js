@@ -1,4 +1,4 @@
-// PoolLens app.js — field intelligence UI logic
+// SplashLens app.js — field intelligence UI logic
 
 // ═══════════════════════════════════════════
 // STATE
@@ -52,8 +52,9 @@ function showTab(name) {
   if (S.tab === 'scan' && name !== 'scan') stopCamera();
   S.tab = name;
   window.scrollTo(0, 0);
-  if (name === 'route') renderRoute();
-  if (name === 'scan')  initScanTab();
+  if (name === 'route')  renderRoute();
+  if (name === 'scan')   initScanTab();
+  if (name === 'dosing') renderSlamBanner();
 }
 
 // ═══════════════════════════════════════════
@@ -270,6 +271,7 @@ function emptyState() {
 // DOSING CALCULATOR
 // ═══════════════════════════════════════════
 function initDosing() {
+  renderSlamBanner();
   renderSlamTypeBtns();
   renderSlamProducts();
   renderRangesTable();
@@ -509,8 +511,171 @@ function calculateSlam() {
       ${addHtml}
       <div class="info-box" style="margin-top:10px;font-size:11px;">${def.note}</div>
       <p style="color:#94a3b8;font-size:10px;margin-top:8px;">OCLT: After SLAM, test FC at dusk and dawn. Pass = loss &lt; 1 ppm overnight.</p>
+      <button onclick="startSlamTracker(${targetFC},'${S.slamType}',${vol},${cya})"
+        style="width:100%;margin-top:12px;padding:14px;background:#92400e;color:#fef3c7;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.02em;">
+        ▶ Start SLAM Tracker (Multi-Day)
+      </button>
     </div>`);
 }
+
+// ═══════════════════════════════════════════
+// SLAM MULTI-DAY TRACKER
+// ═══════════════════════════════════════════
+const SLAM_KEY = 'poolens-slam';
+
+function getSlamState() {
+  try { return JSON.parse(localStorage.getItem(SLAM_KEY)) || null; } catch { return null; }
+}
+function saveSlamState(s) { localStorage.setItem(SLAM_KEY, JSON.stringify(s)); }
+function clearSlamState() { localStorage.removeItem(SLAM_KEY); }
+
+function startSlamTracker(targetFC, slamType, poolVolume, cya) {
+  const existing = getSlamState();
+  if (existing?.active) {
+    if (!confirm('A SLAM is already in progress. Start a new one?')) return;
+  }
+  const state = {
+    active:        true,
+    startDate:     new Date().toISOString(),
+    slamType,
+    targetFC,
+    poolVolume,
+    cya,
+    checks:        [],
+    oclt:          { dusk: null, dawn: null },
+    completed:     false,
+    completedDate: null,
+  };
+  saveSlamState(state);
+  renderSlamBanner();
+  setEl('slam-result', `
+    <div style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;padding:16px;text-align:center;">
+      <p style="color:#92400e;font-weight:800;font-size:14px;margin-bottom:6px;">SLAM Tracker Started</p>
+      <p style="color:#78350f;font-size:13px;">Check FC every 4-6 hours. Maintain at ${targetFC} ppm. Use the banner at the top of this tab to log readings.</p>
+    </div>`);
+}
+
+function renderSlamBanner() {
+  const el = document.getElementById('slam-banner');
+  if (!el) return;
+  const s = getSlamState();
+  if (!s?.active) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const dayNum    = Math.floor((Date.now() - new Date(s.startDate)) / 86400000) + 1;
+  const lastCheck = s.checks.length ? s.checks[s.checks.length - 1] : null;
+  const lastFC    = lastCheck ? `${lastCheck.fc} ppm` : '—';
+  const lastTime  = lastCheck ? new Date(lastCheck.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—';
+  const passCount = s.checks.filter(c => c.pass).length;
+  const checkCount = s.checks.length;
+  const ocltReady  = passCount >= 2 && checkCount >= 4;
+
+  const conditionsMet = s.oclt.dusk && s.oclt.dawn && (s.oclt.dusk - s.oclt.dawn) <= 1;
+
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,#78350f,#92400e);border-radius:12px;padding:14px;color:#fff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <span style="background:#fbbf24;color:#78350f;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:800;">SLAM DAY ${dayNum}</span>
+          <p style="font-size:16px;font-weight:900;margin-top:4px;">Target FC: ${s.targetFC} ppm</p>
+        </div>
+        <button onclick="if(confirm('End SLAM and clear tracker?')){clearSlamState();renderSlamBanner();}" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;">End SLAM</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;">
+          <p style="font-size:9px;opacity:.7;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Last FC</p>
+          <p style="font-size:18px;font-weight:900;">${lastFC}</p>
+          <p style="font-size:9px;opacity:.6;">${lastTime}</p>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;">
+          <p style="font-size:9px;opacity:.7;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Checks</p>
+          <p style="font-size:18px;font-weight:900;">${checkCount}</p>
+          <p style="font-size:9px;opacity:.6;">${passCount} passed</p>
+        </div>
+        <div style="background:${ocltReady?'rgba(21,128,61,0.4)':'rgba(0,0,0,0.2)'};border-radius:8px;padding:8px;text-align:center;">
+          <p style="font-size:9px;opacity:.7;font-weight:700;text-transform:uppercase;margin-bottom:3px;">OCLT</p>
+          <p style="font-size:18px;font-weight:900;">${s.oclt.dawn !== null ? '✓' : ocltReady ? '→' : '⏳'}</p>
+          <p style="font-size:9px;opacity:.6;">${s.oclt.dawn !== null ? 'Done' : ocltReady ? 'Ready' : 'Hold'}</p>
+        </div>
+      </div>
+      <div id="slam-checkin-form">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="slam-fc-reading" type="number" placeholder="FC ppm" inputmode="decimal" min="0" max="50"
+            style="flex:1;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:16px;font-weight:700;outline:none;"
+            onkeydown="if(event.key==='Enter')logSlamCheckIn()">
+          <button onclick="logSlamCheckIn()" style="padding:12px 16px;background:#fbbf24;color:#78350f;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;">Log FC</button>
+        </div>
+      </div>
+      ${s.checks.length > 0 ? `
+        <div style="margin-top:10px;max-height:120px;overflow-y:auto;">
+          ${[...s.checks].reverse().slice(0,5).map(c => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+              <span style="font-size:12px;opacity:.7;">${new Date(c.time).toLocaleString([],{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+              <span style="font-size:14px;font-weight:700;color:${c.pass?'#86efac':'#fca5a5'};">${c.fc} ppm ${c.pass?'✓':'✗'}</span>
+            </div>`).join('')}
+        </div>` : ''}
+      ${ocltReady && !s.oclt.dusk ? `
+        <div style="margin-top:10px;background:rgba(21,128,61,0.3);border:1px solid rgba(134,239,172,0.3);border-radius:8px;padding:12px;">
+          <p style="font-size:12px;font-weight:700;margin-bottom:8px;">🌅 Ready for OCLT — Log Dusk FC</p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="slam-dusk-fc" type="number" placeholder="Dusk FC" inputmode="decimal" min="0" max="50"
+              style="flex:1;padding:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:16px;font-weight:700;outline:none;">
+            <button onclick="logSlamOCLT('dusk')" style="padding:10px 14px;background:#86efac;color:#14532d;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;">Log Dusk</button>
+          </div>
+        </div>` : ''}
+      ${s.oclt.dusk && !s.oclt.dawn ? `
+        <div style="margin-top:10px;background:rgba(30,64,175,0.3);border:1px solid rgba(147,197,253,0.3);border-radius:8px;padding:12px;">
+          <p style="font-size:12px;font-weight:700;margin-bottom:4px;">🌄 Log Dawn FC (next morning)</p>
+          <p style="font-size:11px;opacity:.7;margin-bottom:8px;">Dusk reading: ${s.oclt.dusk} ppm · Pass = loss &lt; 1 ppm</p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="slam-dawn-fc" type="number" placeholder="Dawn FC" inputmode="decimal" min="0" max="50"
+              style="flex:1;padding:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:16px;font-weight:700;outline:none;">
+            <button onclick="logSlamOCLT('dawn')" style="padding:10px 14px;background:#93c5fd;color:#1e3a8a;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;">Log Dawn</button>
+          </div>
+        </div>` : ''}
+      ${conditionsMet ? `
+        <div style="margin-top:10px;background:rgba(21,128,61,0.4);border:1px solid rgba(134,239,172,0.4);border-radius:8px;padding:14px;text-align:center;">
+          <p style="font-size:16px;font-weight:900;margin-bottom:4px;">SLAM COMPLETE</p>
+          <p style="font-size:12px;opacity:.8;margin-bottom:10px;">FC loss ${s.oclt.dusk - s.oclt.dawn} ppm — OCLT PASSED</p>
+          <button onclick="clearSlamState();renderSlamBanner();" style="background:#86efac;color:#14532d;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:800;cursor:pointer;">Close Tracker</button>
+        </div>` : ''}
+    </div>`;
+}
+
+function logSlamCheckIn() {
+  const input = document.getElementById('slam-fc-reading');
+  const fc = parseFloat(input?.value);
+  if (isNaN(fc) || fc < 0 || fc > 50) { if (input) input.focus(); return; }
+  const s = getSlamState();
+  if (!s) return;
+  const pass = fc >= s.targetFC;
+  s.checks.push({ time: new Date().toISOString(), fc, pass });
+  saveSlamState(s);
+  if (input) input.value = '';
+  renderSlamBanner();
+  if (!pass) {
+    // Brief feedback
+    const lbl = document.createElement('p');
+    lbl.style.cssText = 'color:#fca5a5;font-size:12px;margin-top:6px;text-align:center;';
+    lbl.textContent = `FC below target (${s.targetFC} ppm) — dose and retest in 4-6 hrs`;
+    document.getElementById('slam-banner')?.querySelector('input')?.insertAdjacentElement('afterend', lbl);
+    setTimeout(() => lbl.remove(), 4000);
+  }
+}
+
+function logSlamOCLT(type) {
+  const input = document.getElementById(`slam-${type}-fc`);
+  const fc = parseFloat(input?.value);
+  if (isNaN(fc) || fc < 0 || fc > 50) { if (input) input.focus(); return; }
+  const s = getSlamState();
+  if (!s) return;
+  s.oclt[type] = fc;
+  saveSlamState(s);
+  renderSlamBanner();
+}
+
+// Call renderSlamBanner() when Dosing tab is shown
+// (hooked into showTab below)
 
 // ═══════════════════════════════════════════
 // RANGES TABLE
@@ -950,6 +1115,9 @@ function initReport() {
   const dateEl = document.getElementById('rpt-date');
   if (dateEl && !dateEl.value) dateEl.value = today;
   addChemRow();
+  // Show share button only when Web Share API is available (iOS Safari, Android Chrome)
+  const shareBtn = document.getElementById('rpt-share-btn');
+  if (shareBtn && !navigator.share) shareBtn.style.display = 'none';
 }
 
 function addChemRow() {
@@ -1016,7 +1184,7 @@ function buildReportText() {
     ...(rec   ? ['RECOMMENDATIONS:', rec, '']  : []),
     ...(next  ? [`NEXT VISIT: ${next}`, '']    : []),
     HR,
-    'Generated by PoolLens Field Reference',
+    'Generated by SplashLens Field Reference',
   ];
   return lines.join('\n');
 }
@@ -1027,6 +1195,19 @@ function copyReport() {
     const el = document.getElementById('rpt-copy-confirm');
     if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 2600); }
   });
+}
+
+function shareReport() {
+  const text = buildReportText();
+  if (navigator.share) {
+    navigator.share({ title: 'Pool Service Report', text }).catch(() => {});
+  } else {
+    // Fallback: copy + show confirm
+    navigator.clipboard.writeText(text).then(() => {
+      const el = document.getElementById('rpt-copy-confirm');
+      if (el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 2600); }
+    });
+  }
 }
 
 function printReport() {
@@ -2105,27 +2286,70 @@ function infoBox(main, sub) {
 // SCAN TAB — Camera AI + Code Lookup + Chem
 // ═══════════════════════════════════════════
 
-let _scanStream  = null;
-let _scanMode    = 'camera';
-let _scanBrand   = null; // null = all brands
+let _scanStream    = null;
+let _scanMode      = 'camera';
+let _scanBrand     = null;   // null = all brands
+let _flashOn       = false;
+let _flashTrack    = null;
 
 function initScanTab() {
+  updateAIStatusBar();
   setScanMode(_scanMode || 'camera');
   renderScanBrandFilter();
 }
 
+function updateAIStatusBar() {
+  const dot   = document.getElementById('scan-ai-dot');
+  const label = document.getElementById('scan-ai-label');
+  if (!dot || !label) return;
+  if (navigator.onLine) {
+    dot.style.background   = '#16a34a';
+    label.textContent      = 'AI SCANNER READY';
+    label.style.color      = '#4ade80';
+  } else {
+    dot.style.background   = '#64748b';
+    label.textContent      = 'OFFLINE — CODE LOOKUP AVAILABLE';
+    label.style.color      = '#64748b';
+  }
+}
+
 function setScanMode(mode) {
   _scanMode = mode;
-  ['camera','lookup','chem'].forEach(m => {
-    const btn   = document.getElementById(`scan-mode-${m}`);
-    const panel = document.getElementById(`scan-${m}-panel`);
-    if (btn)   { btn.style.background = m === mode ? '#0284c7' : 'transparent'; btn.style.color = m === mode ? '#fff' : '#94a3b8'; }
-    if (panel) panel.style.display = m === mode ? 'block' : 'none';
+  const isCameraMode = mode === 'camera' || mode === 'parts' || mode === 'strip';
+  // Update mode buttons — all camera sub-modes share the camera panel
+  ['camera','parts','strip','lookup','chem'].forEach(m => {
+    const btn = document.getElementById(`scan-mode-${m}`);
+    if (!btn) return;
+    btn.style.background = m === mode ? '#0284c7' : 'transparent';
+    btn.style.color      = m === mode ? '#fff'    : '#94a3b8';
   });
-  if (mode === 'camera') startCamera();
-  else stopCamera();
+  // Panel visibility
+  const camPanel    = document.getElementById('scan-camera-panel');
+  const lookupPanel = document.getElementById('scan-lookup-panel');
+  const chemPanel   = document.getElementById('scan-chem-panel');
+  if (camPanel)    camPanel.style.display    = isCameraMode ? 'block' : 'none';
+  if (lookupPanel) lookupPanel.style.display = mode === 'lookup' ? 'block' : 'none';
+  if (chemPanel)   chemPanel.style.display   = mode === 'chem'   ? 'block' : 'none';
+
+  // Update camera guidance text
+  const status = document.getElementById('scan-camera-status');
+  const capBtn = document.getElementById('scan-capture-btn');
+  if (mode === 'parts') {
+    if (status) status.textContent = 'AIM AT EQUIPMENT PART — TAP IDENTIFY';
+    if (capBtn) capBtn.textContent = '🔧 IDENTIFY PART';
+  } else if (mode === 'strip') {
+    if (status) status.textContent = 'AIM AT TEST STRIP IN GOOD LIGHT — TAP SCAN';
+    if (capBtn) capBtn.textContent = '🧪 SCAN STRIP';
+  } else {
+    if (status) status.textContent = 'AIM AT ERROR CODE DISPLAY — TAP CAPTURE';
+    if (capBtn) capBtn.textContent = '⬤ CAPTURE';
+  }
+
+  if (isCameraMode) startCamera();
+  else              stopCamera();
   if (mode === 'lookup') renderScanBrandFilter();
   if (mode === 'chem')   renderChemCatalogHome();
+  updateAIStatusBar();
 }
 
 // ── Camera ──────────────────────────────────
@@ -2134,33 +2358,54 @@ function startCamera() {
   const video  = document.getElementById('scan-video');
   const noCam  = document.getElementById('scan-no-camera');
   const vWrap  = document.getElementById('scan-viewfinder-wrap');
-  const status = document.getElementById('scan-camera-status');
   if (!video) return;
   if (!navigator.mediaDevices?.getUserMedia) {
-    if (vWrap)  vWrap.style.display  = 'none';
-    if (noCam)  noCam.style.display  = 'block';
-    if (status) status.style.display = 'none';
+    if (vWrap)  vWrap.style.display = 'none';
+    if (noCam)  noCam.style.display = 'block';
+    return;
+  }
+  // Don't restart if already streaming
+  if (_scanStream?.active) {
+    video.srcObject = _scanStream;
+    if (vWrap)  vWrap.style.display = 'block';
+    if (noCam)  noCam.style.display = 'none';
     return;
   }
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } })
     .then(stream => {
       _scanStream = stream;
+      _flashTrack = stream.getVideoTracks()[0] || null;
       video.srcObject = stream;
-      if (vWrap)  vWrap.style.display  = 'block';
-      if (noCam)  noCam.style.display  = 'none';
-      if (status) status.textContent = 'AIM AT ERROR CODE DISPLAY — TAP CAPTURE';
+      if (vWrap)  vWrap.style.display = 'block';
+      if (noCam)  noCam.style.display = 'none';
     })
     .catch(() => {
-      if (vWrap)  vWrap.style.display  = 'none';
-      if (noCam)  noCam.style.display  = 'block';
-      if (status) status.style.display = 'none';
+      if (vWrap)  vWrap.style.display = 'none';
+      if (noCam)  noCam.style.display = 'block';
     });
 }
 
+function toggleFlashlight() {
+  if (!_flashTrack) return;
+  const cap = _flashTrack.getCapabilities?.();
+  if (!cap?.torch) return;
+  _flashOn = !_flashOn;
+  _flashTrack.applyConstraints({ advanced: [{ torch: _flashOn }] }).catch(() => {});
+  const btn = document.getElementById('scan-flash-btn');
+  if (btn) btn.style.background = _flashOn ? '#fbbf24' : '#1e293b';
+}
+
 function stopCamera() {
+  if (_flashOn && _flashTrack) {
+    _flashTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+    _flashOn = false;
+    const btn = document.getElementById('scan-flash-btn');
+    if (btn) btn.style.background = '#1e293b';
+  }
   if (_scanStream) {
     _scanStream.getTracks().forEach(t => t.stop());
     _scanStream = null;
+    _flashTrack = null;
   }
 }
 
@@ -2170,32 +2415,165 @@ function captureAndAnalyze() {
   const status = document.getElementById('scan-camera-status');
   const result = document.getElementById('scan-result');
   if (!video || !canvas) return;
+
   canvas.width  = video.videoWidth  || 640;
   canvas.height = video.videoHeight || 360;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
+  canvas.getContext('2d').drawImage(video, 0, 0);
 
-  if (status) status.textContent = 'ANALYZING…';
+  const isPartsScan  = _scanMode === 'parts';
+  const isStripScan  = _scanMode === 'strip';
 
-  // Try native Text Detection API (Chrome/Android, some desktop Chrome)
-  if ('TextDetector' in window) {
-    canvas.convertToBlob({ type: 'image/jpeg' }).then(blob => {
-      createImageBitmap(blob).then(bmp => {
-        const detector = new TextDetector();
-        detector.detect(bmp).then(texts => {
-          const raw = texts.map(t => t.rawValue).join(' ');
-          const codes = extractErrorCodes(raw);
-          if (codes.length) {
-            runCodeSearch(codes[0], result, status);
-          } else {
-            showCaptureWithManualEntry(canvas, raw, result, status);
-          }
-        }).catch(() => showCaptureWithManualEntry(canvas, '', result, status));
-      });
-    }).catch(() => showCaptureWithManualEntry(canvas, '', result, status));
-  } else {
-    showCaptureWithManualEntry(canvas, '', result, status);
+  if (status) status.textContent = navigator.onLine ? 'AI ANALYZING…' : 'SCANNING…';
+
+  // AI-first path: call CF Worker when online
+  if (navigator.onLine) {
+    const aiMode = isPartsScan ? 'parts_snap' : isStripScan ? 'test_strip' : 'error_code';
+    callAIScan(canvas, aiMode, result, status);
+    return;
   }
+
+  // Offline strip and parts need AI — show message
+  if (isStripScan || isPartsScan) {
+    if (status) status.textContent = 'INTERNET REQUIRED FOR AI SCAN';
+    if (result) result.innerHTML = `<div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:20px;text-align:center;">
+      <p style="color:#fbbf24;font-size:14px;font-weight:700;margin-bottom:8px;">${isStripScan ? '🧪 Test Strip' : '🔧 PartSnap'} requires AI</p>
+      <p style="color:#64748b;font-size:12px;line-height:1.5;">Connect to internet and try again, or use Code Lookup to search manually.</p>
+    </div>`;
+    return;
+  }
+
+  // Offline error code: try native TextDetector
+  if ('TextDetector' in window) {
+    canvas.convertToBlob({ type: 'image/jpeg' }).then(blob =>
+      createImageBitmap(blob).then(bmp => {
+        new TextDetector().detect(bmp).then(texts => {
+          const raw   = texts.map(t => t.rawValue).join(' ');
+          const codes = extractErrorCodes(raw);
+          if (codes.length) runCodeSearch(codes[0], result, status);
+          else showCaptureWithManualEntry(canvas, raw, result, status);
+        }).catch(() => showCaptureWithManualEntry(canvas, '', result, status));
+      })
+    ).catch(() => showCaptureWithManualEntry(canvas, '', result, status));
+    return;
+  }
+
+  // Final fallback: manual entry
+  showCaptureWithManualEntry(canvas, '', result, status);
+}
+
+async function callAIScan(canvas, mode, result, status) {
+  try {
+    const base64 = canvas.toDataURL('image/jpeg', 0.85).replace(/^data:image\/jpeg;base64,/, '');
+    const res = await fetch('/api/scan', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ image: base64, mode }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { result: aiResult } = await res.json();
+
+    if (mode === 'parts_snap') {
+      renderPartsSnapResult(aiResult, result, status);
+      return;
+    }
+    if (mode === 'test_strip') {
+      renderStripResult(aiResult, result, status);
+      return;
+    }
+
+    // error_code mode
+    const { codes = [], brand, model, context, confidence } = aiResult;
+    if (codes.length && confidence !== 'low') {
+      if (status) status.textContent = `AI FOUND: ${codes.join(', ')}`;
+      const hits = searchErrorDB(codes[0], null);
+      if (result) result.innerHTML = `
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="background:#7c3aed;color:#fff;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;">AI DETECTED</span>
+            ${brand ? `<span style="color:#94a3b8;font-size:11px;">${brand}${model ? ' · '+model : ''}</span>` : ''}
+          </div>
+          <p style="color:#f1f5f9;font-size:18px;font-weight:900;letter-spacing:.08em;margin-bottom:4px;">${codes.join('  ')}</p>
+          ${context ? `<p style="color:#7dd3fc;font-size:12px;">${context}</p>` : ''}
+        </div>
+        ${renderScanHits(hits, codes[0])}
+        ${!hits.length ? `<div style="text-align:center;padding:16px 0;"><button onclick="showCaptureWithManualEntry(document.getElementById('scan-canvas'),'${codes[0]}',document.getElementById('scan-result'),document.getElementById('scan-camera-status'))" style="background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer;">Edit Code Manually</button></div>` : ''}
+      `;
+    } else {
+      // AI not confident — try TextDetector then manual
+      if ('TextDetector' in window) {
+        canvas.convertToBlob({ type: 'image/jpeg' }).then(blob =>
+          createImageBitmap(blob).then(bmp =>
+            new TextDetector().detect(bmp).then(texts => {
+              const raw   = texts.map(t => t.rawValue).join(' ');
+              const found = extractErrorCodes(raw);
+              if (found.length) runCodeSearch(found[0], result, status);
+              else showCaptureWithManualEntry(canvas, context || raw, result, status);
+            }).catch(() => showCaptureWithManualEntry(canvas, context || '', result, status))
+          )
+        );
+      } else {
+        showCaptureWithManualEntry(canvas, context || '', result, status);
+      }
+    }
+  } catch (err) {
+    // Network error or worker unavailable — fall back to offline path
+    if (status) status.textContent = 'AI UNAVAILABLE — USING LOCAL SCAN';
+    if ('TextDetector' in window) {
+      canvas.convertToBlob({ type: 'image/jpeg' }).then(blob =>
+        createImageBitmap(blob).then(bmp =>
+          new TextDetector().detect(bmp).then(texts => {
+            const raw   = texts.map(t => t.rawValue).join(' ');
+            const codes = extractErrorCodes(raw);
+            if (codes.length) runCodeSearch(codes[0], result, status);
+            else showCaptureWithManualEntry(canvas, raw, result, status);
+          }).catch(() => showCaptureWithManualEntry(canvas, '', result, status))
+        )
+      );
+    } else {
+      showCaptureWithManualEntry(canvas, '', result, status);
+    }
+  }
+}
+
+function renderPartsSnapResult(ai, result, status) {
+  if (!result) return;
+  const { manufacturer, category, component, model, partNumber, description, condition, replacementNotes, searchTerms, confidence } = ai;
+  const low = confidence === 'low';
+
+  if (status) status.textContent = low ? 'PART NOT IDENTIFIED — TRY CLOSER' : `IDENTIFIED: ${component || 'Unknown part'}`;
+
+  const condColor = { new:'#16a34a', good:'#16a34a', worn:'#d97706', damaged:'#dc2626', unknown:'#64748b' }[condition] || '#64748b';
+
+  result.innerHTML = `
+    <div style="background:#1e293b;border:1px solid ${low?'#334155':'#7c3aed'};border-radius:12px;padding:16px;margin-bottom:10px;border-left:4px solid ${low?'#334155':'#7c3aed'};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="background:#7c3aed;color:#fff;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;">🔧 PARTS SNAP</span>
+        ${manufacturer ? `<span style="color:#94a3b8;font-size:11px;">${manufacturer}</span>` : ''}
+        ${category ? `<span style="color:#64748b;font-size:11px;text-transform:uppercase;">${category}</span>` : ''}
+        <span style="margin-left:auto;background:${condColor};color:#fff;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">${(condition||'unknown').toUpperCase()}</span>
+      </div>
+      <p style="color:#f1f5f9;font-size:18px;font-weight:800;margin-bottom:4px;">${component || 'Unknown Part'}</p>
+      ${model ? `<p style="color:#7dd3fc;font-size:12px;margin-bottom:6px;">${model}</p>` : ''}
+      ${description ? `<p style="color:#94a3b8;font-size:13px;line-height:1.5;margin-bottom:10px;">${description}</p>` : ''}
+      ${partNumber ? `
+        <div style="background:#0f172a;border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+          <p style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">OEM PART NUMBER</p>
+          <p style="color:#fbbf24;font-size:16px;font-weight:800;letter-spacing:.05em;">${partNumber}</p>
+        </div>
+      ` : ''}
+      ${replacementNotes ? `<p style="color:#fbbf24;font-size:12px;font-weight:600;margin-bottom:10px;">⚠ ${replacementNotes}</p>` : ''}
+      ${searchTerms?.length ? `
+        <p style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">SEARCH ONLINE</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${searchTerms.map(t => `<span style="background:#0f172a;color:#7dd3fc;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;">${t}</span>`).join('')}
+        </div>
+      ` : ''}
+      ${low ? `<p style="color:#64748b;font-size:12px;margin-top:12px;text-align:center;">Try getting closer, better lighting, or a different angle</p>` : ''}
+    </div>
+    <div style="text-align:center;padding:8px 0 16px;">
+      <button onclick="setScanMode('parts');document.getElementById('scan-result').innerHTML=''" style="background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer;">Scan Another Part</button>
+    </div>
+  `;
 }
 
 function extractErrorCodes(text) {
@@ -2336,6 +2714,50 @@ function renderScanHits(hits, query) {
       ${h.callpro ? `<p style="color:#fbbf24;font-size:12px;font-weight:700;margin-top:10px;">⚠ Recommend calling a certified technician for this fault.</p>` : ''}
     </div>
   `).join('');
+}
+
+function renderStripResult(ai, result, status) {
+  if (!result) return;
+  const { fc, ph, ta, ch, cya, notes, confidence, disclaimer } = ai;
+
+  if (status) status.textContent = 'TEST STRIP READING COMPLETE';
+
+  const val  = (v, unit='ppm') => v !== null && v !== undefined ? `<span style="font-size:22px;font-weight:900;color:#f1f5f9;">${v}</span> <span style="font-size:12px;color:#64748b;">${unit}</span>` : '<span style="color:#334155;font-size:18px;">—</span>';
+  const flag = (v, lo, hi) => {
+    if (v === null || v === undefined) return '#334155';
+    return v < lo || v > hi ? '#d97706' : '#16a34a';
+  };
+
+  const rows = [
+    { label: 'Free Chlorine', key: 'fc', v: fc, lo: 1, hi: 5 },
+    { label: 'pH', key: 'ph', v: ph, lo: 7.2, hi: 7.8, unit: '' },
+    { label: 'Total Alkalinity', key: 'ta', v: ta, lo: 80, hi: 120 },
+    { label: 'Calcium Hardness', key: 'ch', v: ch, lo: 150, hi: 400 },
+    { label: 'Cyanuric Acid', key: 'cya', v: cya, lo: 30, hi: 80 },
+  ];
+
+  result.innerHTML = `
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="background:#0284c7;color:#fff;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;">🧪 TEST STRIP AI READ</span>
+        <span style="margin-left:auto;background:#334155;color:#94a3b8;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;">${(confidence||'medium').toUpperCase()}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        ${rows.map(r => `
+          <div style="background:#0f172a;border:1px solid ${flag(r.v, r.lo, r.hi)};border-radius:8px;padding:10px;border-left:3px solid ${flag(r.v, r.lo, r.hi)};">
+            <p style="color:#64748b;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${r.label}</p>
+            ${val(r.v, r.unit !== undefined ? r.unit : 'ppm')}
+            ${r.v !== null && r.v !== undefined ? (r.v < r.lo || r.v > r.hi ? '<p style="color:#fbbf24;font-size:9px;margin-top:3px;">⚠ Out of range</p>' : '<p style="color:#4ade80;font-size:9px;margin-top:3px;">✓ In range</p>') : ''}
+          </div>`).join('')}
+      </div>
+      ${notes ? `<p style="color:#7dd3fc;font-size:13px;line-height:1.5;margin-bottom:10px;">${notes}</p>` : ''}
+      ${disclaimer ? `<p style="color:#475569;font-size:10px;line-height:1.4;font-style:italic;">${disclaimer}</p>` : ''}
+    </div>
+    <div style="text-align:center;padding:0 0 16px;">
+      <button onclick="showTab('dosing')" style="background:#0284c7;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px;">Calculate Doses →</button>
+      <button onclick="setScanMode('strip');document.getElementById('scan-result').innerHTML=''" style="background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;">Scan Again</button>
+    </div>
+  `;
 }
 
 // ── Chem Catalog ─────────────────────────────
