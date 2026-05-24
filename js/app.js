@@ -49,7 +49,7 @@ function showTab(name) {
   const btn   = document.getElementById(`nav-${name}`);
   if (panel) panel.classList.add('active');
   if (btn)   btn.classList.add('active');
-  if (S.tab !== 'scan' && name !== 'scan') stopCamera();
+  if (S.tab === 'scan' && name !== 'scan') stopCamera();
   S.tab = name;
   window.scrollTo(0, 0);
   if (name === 'route') renderRoute();

@@ -502,3 +502,687 @@ window.CARTRIDGE_FILTER_DATA = {
     ]
   }
 };
+
+// ---------------------------------------------------------------------------
+// Chemical Product Catalog — Reference (NOT a dosing calculator)
+// Helps techs identify products, generic equivalents, and retail alternatives.
+// ---------------------------------------------------------------------------
+window.CHEM_CATALOG = {
+
+  categories: [
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 1: Chlorine & Sanitizers
+    // -----------------------------------------------------------------------
+    {
+      id: "chlorine",
+      label: "Chlorine & Sanitizers",
+      products: [
+        {
+          name: "Liquid Chlorine 10% / 12.5%",
+          genericName: "Sodium Hypochlorite",
+          activeIngredient: "Sodium Hypochlorite 10–12.5%",
+          brands: [
+            "HTH Pool Shock Liquid",
+            "In The Swim Liquid Chlorine",
+            "Clorox Pool Liquid Chlorinator",
+            "Leslie's Liquid Chlorine"
+          ],
+          alternatives: [
+            { store: "Walmart", product: "Clorox Splash-Less Bleach 8.25%", note: "Works but more dilute — use more oz per dose. No added thickeners." },
+            { store: "Sam's Club", product: "Member's Mark Liquid Chlorine 12.5%", note: "Commercial grade, excellent value per gallon. Same as pool store stock." },
+            { store: "Home Depot", product: "HTH Pool Liquid 10%", note: "Standard retail liquid chlorine — same product as pool store, usually cheaper." },
+            { store: "Costco", product: "Kirkland Sodium Hypochlorite (when available)", note: "Check concentration on label. Often 8.25% — adjust dose accordingly." }
+          ],
+          notes: "Most economical sanitizer for active service. No stabilizer added — good for SLAM. Buy fresh and rotate stock — degrades ~50% potency within 6 months of manufacture. Never mix with other chemicals directly.",
+          incompatible: ["Cal-Hypo", "Trichlor", "Dichlor", "muriatic acid", "ammonia-based algaecides"]
+        },
+        {
+          name: "Cal-Hypo 65% Shock",
+          genericName: "Calcium Hypochlorite",
+          activeIngredient: "Calcium Hypochlorite 65%",
+          brands: [
+            "HTH Super Shock",
+            "In The Swim Cal-Hypo Shock",
+            "Leslie's Power Powder Plus",
+            "BioGuard Burn Out Extreme",
+            "Zappit 65"
+          ],
+          alternatives: [
+            { store: "Sam's Club", product: "Member's Mark Pool Shock 68%", note: "Bulk bags significantly cheaper than pool store — same chemical." },
+            { store: "Costco", product: "HTH Super Shock (bulk pack)", note: "Seasonal availability — stock up when available." },
+            { store: "Home Depot", product: "HTH Super Shock 1-lb bags", note: "Standard retail — convenient but costs more per pound than bulk." },
+            { store: "Walmart", product: "In The Swim Shock (seasonal)", note: "Available in season — verify concentration on bag." }
+          ],
+          notes: "Raises calcium hardness — track CH when shocking frequently. NEVER add directly to skimmer or dissolve in plastic bucket. Pre-dissolve in a dedicated 5-gal bucket of water, pour around perimeter. Keep dry and away from all other chemicals — reacts violently with Trichlor.",
+          incompatible: ["Trichlor", "Dichlor", "liquid chlorine (never mix concentrates)", "acids"]
+        },
+        {
+          name: "Cal-Hypo 73% Shock (Professional Grade)",
+          genericName: "Calcium Hypochlorite",
+          activeIngredient: "Calcium Hypochlorite 73%",
+          brands: [
+            "Olin 73% Cal-Hypo",
+            "Accu-Tab 73%",
+            "Arch Cal-Hypo 73",
+            "BioGuard Super Soluble"
+          ],
+          alternatives: [
+            { store: "Pool Supply Wholesale", product: "73% Cal-Hypo in 25/50-lb pails", note: "Not typically at consumer retail — source through pool supply distributors." }
+          ],
+          notes: "Professional/commercial grade. Higher concentration means less product per dose — calculate carefully. Same calcium-raise concern as 65% but stronger. Pre-dissolve protocol is mandatory — never shortcut this step.",
+          incompatible: ["Trichlor", "Dichlor", "all chlorine concentrates", "acids", "flammable materials"]
+        },
+        {
+          name: "Trichlor Tablets (3-inch)",
+          genericName: "Trichloroisocyanuric Acid",
+          activeIngredient: "Trichloro-s-Triazinetrione 90%",
+          brands: [
+            "HTH 3\" Chlorinating Tablets",
+            "In The Swim Trichlor Tabs",
+            "Clorox Pool Tabs",
+            "Leslie's 3\" Tabs",
+            "BioGuard Silk Tabs"
+          ],
+          alternatives: [
+            { store: "Sam's Club", product: "Member's Mark 3\" Chlorine Tabs (3-lb or 35-lb bucket)", note: "Bulk purchase saves 30-60% vs pool store. Same trichlor chemistry." },
+            { store: "Costco", product: "HTH 3\" Chlorine Tabs 35-lb bucket (seasonal)", note: "Best price per pound when available — stock up in spring." },
+            { store: "Walmart", product: "HTH 3\" Tabs or Clorox Pool Tabs 5-lb bucket", note: "Retail pricing — acceptable for smaller pools or convenience." },
+            { store: "Home Depot", product: "HTH Pool Tabs 3-lb or 5-lb bucket", note: "Standard retail. Compare per-pound price to warehouse clubs." }
+          ],
+          notes: "Each tab slowly lowers pH and raises CYA — monitor both monthly. Use ONLY in floating dispensers or erosion feeders, never directly in skimmer (corrosive to pump). Raises CYA ~2-4 ppm per tab per 10,000 gal over time — CYA creep is the primary reason pools get over-stabilized.",
+          incompatible: ["Cal-Hypo (violent reaction — fire/explosion risk)", "liquid chlorine (never mix concentrates)", "other chlorine products", "acids"]
+        },
+        {
+          name: "Dichlor Granular",
+          genericName: "Sodium Dichloroisocyanurate",
+          activeIngredient: "Sodium Dichloro-s-Triazinetrione Dihydrate 56%",
+          brands: [
+            "HTH Granular Dichlor",
+            "In The Swim Dichlor",
+            "BioGuard Burnout 3",
+            "Leslie's Dichlor Shock"
+          ],
+          alternatives: [
+            { store: "Sam's Club", product: "Member's Mark Dichlor (seasonal)", note: "Bulk savings available seasonally." },
+            { store: "Home Depot / Walmart", product: "HTH Granular Shock (verify Dichlor on label)", note: "Some HTH granular is Dichlor, some is Cal-Hypo — read the label carefully." }
+          ],
+          notes: "Dissolves quickly and is good for vinyl liner pools (won't bleach). RAISES CYA approximately 1.5× the chlorine added — heavy use causes CYA to skyrocket. Not recommended for routine maintenance in stabilized pools. Better as a one-time or seasonal opener product.",
+          incompatible: ["Cal-Hypo", "liquid chlorine concentrates", "acids"]
+        },
+        {
+          name: "Non-Chlorine Shock (Potassium Monopersulfate)",
+          genericName: "Potassium Monopersulfate",
+          activeIngredient: "Potassium Peroxymonosulfate (KMPS) 42.8%",
+          brands: [
+            "HTH Non-Chlorine Shock",
+            "BioGuard Burn Out 35",
+            "Natural Chemistry Spa Oxidizer",
+            "Leisure Time Renew",
+            "In The Swim Non-Chlorine Shock"
+          ],
+          alternatives: [
+            { store: "Walmart / Amazon", product: "Clorox Pool & Spa Shock Xtra Blue (verify KMPS formula)", note: "Some Clorox shock is KMPS-based — read label. Good for maintenance oxidation." }
+          ],
+          notes: "Oxidizes organic contaminants (sweat, oils, sunscreen) without adding chlorine or raising CYA. Does NOT kill algae alone — requires active chlorine. Use after heavy bather load to burn off organics. Pool can be re-entered 15 min after addition. Will give a false CC reading for 24 hours — do not test CC the same day.",
+          incompatible: ["Cal-Hypo (in concentrated form)", "never mix dry chemicals directly"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 2: Baquacil System (Biguanide)
+    // -----------------------------------------------------------------------
+    {
+      id: "baquacil",
+      label: "Baquacil System (Biguanide — Chlorine-Free)",
+      products: [
+        {
+          name: "Baquacil Sanitizer & Algistat",
+          genericName: "Polyhexamethylene Biguanide (PHMB)",
+          activeIngredient: "Poly(hexamethylene biguanide) hydrochloride 27.5%",
+          brands: [
+            "Baquacil Sanitizer & Algistat",
+            "BioGuard SoftSwim B",
+            "Swimtrine Plus"
+          ],
+          alternatives: [
+            { store: "Pool specialty only", product: "No consumer retail equivalent", note: "PHMB is not sold outside the pool/spa channel. Must purchase from pool store or online pool supplier." }
+          ],
+          notes: "PRIMARY sanitizer in the Baquacil system. Maintains 30–50 ppm PHMB in water. Completely incompatible with chlorine — even trace chlorine contact destroys the biguanide system and creates a white floc that clogs filters. Requires its own dedicated oxidizer and shock products.",
+          incompatible: ["ALL chlorine products (liquid, tablet, granular, shock)", "bromine", "copper-based algaecides"]
+        },
+        {
+          name: "Baquacil Oxidizer",
+          genericName: "Hydrogen Peroxide",
+          activeIngredient: "Hydrogen Peroxide 27%",
+          brands: [
+            "Baquacil Oxidizer",
+            "BioGuard SoftSwim C",
+            "Baquashield"
+          ],
+          alternatives: [
+            { store: "Note", product: "Do NOT substitute drugstore H2O2 (3%)", note: "Consumer hydrogen peroxide is only 3% — far too dilute. Pool-grade 27% is required for effective oxidation." }
+          ],
+          notes: "The oxidizer component of the Baquacil 3-part system. Applied weekly at 1 qt per 10,000 gal. Breaks down organic waste that PHMB alone cannot address. Keep levels at 30–50 ppm oxidizer. Do not substitute with chlorine-based shock under any circumstances.",
+          incompatible: ["All chlorine products", "never mix with Baquacil CDX in concentrated form"]
+        },
+        {
+          name: "Baquacil CDX",
+          genericName: "Biguanide Performance Enhancer / Shock Bridge",
+          activeIngredient: "Proprietary PHMB-compatible oxidizer blend",
+          brands: [
+            "Baquacil CDX",
+            "BioGuard SoftSwim CDX"
+          ],
+          alternatives: [
+            { store: "Pool specialty only", product: "No generic equivalent", note: "CDX is a specialized product with no consumer substitute — must use brand product." }
+          ],
+          notes: "The 'intelligent shock' that bridges the Baquacil Sanitizer and Oxidizer, preventing the characteristic pink/gray slime that occurs in neglected biguanide pools. Applied monthly. Many service techs underuse this — it's the most common reason biguanide pools develop chronic problems.",
+          incompatible: ["All chlorine products", "acids in concentrated form"]
+        },
+        {
+          name: "BioGuard SoftSwim B",
+          genericName: "Polyhexamethylene Biguanide (PHMB)",
+          activeIngredient: "Poly(hexamethylene biguanide) hydrochloride 27.5%",
+          brands: ["BioGuard SoftSwim B"],
+          alternatives: [
+            { store: "Pool specialty only", product: "Functionally identical to Baquacil Sanitizer & Algistat", note: "Different brand, same chemistry. Either product maintains a biguanide pool." }
+          ],
+          notes: "BioGuard's version of the Baquacil Sanitizer. Same PHMB chemistry at the same concentration — interchangeable with Baquacil Sanitizer & Algistat. All chlorine compatibility warnings apply equally.",
+          incompatible: ["ALL chlorine products", "bromine", "copper algaecides"]
+        },
+        {
+          name: "BioGuard SoftSwim C",
+          genericName: "Hydrogen Peroxide",
+          activeIngredient: "Hydrogen Peroxide 27%",
+          brands: ["BioGuard SoftSwim C"],
+          alternatives: [
+            { store: "Note", product: "Interchangeable with Baquacil Oxidizer", note: "Same chemistry — different brand. Either product works in a SoftSwim or Baquacil system." }
+          ],
+          notes: "BioGuard's version of the Baquacil Oxidizer. Applied weekly as the oxidation component of the 3-part SoftSwim system. Identical chemistry to Baquacil Oxidizer — can be used interchangeably.",
+          incompatible: ["All chlorine products"]
+        }
+      ],
+      systemWarning: "CRITICAL: Baquacil / SoftSwim pools CANNOT switch to chlorine without a full drain, surface cleaning, and refill. Mixing chlorine into a biguanide pool causes a white floc precipitation that clogs filters and requires complete system teardown. Always confirm sanitizer type BEFORE adding any product to an unfamiliar pool."
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 3: pH Adjusters
+    // -----------------------------------------------------------------------
+    {
+      id: "ph",
+      label: "pH Adjusters",
+      products: [
+        {
+          name: "Soda Ash (pH Up)",
+          genericName: "Sodium Carbonate",
+          activeIngredient: "Sodium Carbonate (Na2CO3) 100%",
+          brands: [
+            "HTH pH Up",
+            "Clorox Pool pH Up",
+            "In The Swim pH Increaser",
+            "BioGuard Balance Pak 200",
+            "Leslie's pH Up"
+          ],
+          alternatives: [
+            { store: "Walmart / Grocery", product: "Arm & Hammer Super Washing Soda (NOT baking soda)", note: "100% sodium carbonate — exact same chemical as pool store pH Up at a fraction of the cost. Confirm label reads 'sodium carbonate' not 'sodium bicarbonate'." },
+            { store: "Walmart", product: "OxiClean Versatile Stain Remover (sodium carbonate only formula)", note: "Some versions are pure sodium carbonate — verify ingredients before use." }
+          ],
+          notes: "Raises both pH and Total Alkalinity. Add slowly — 1 lb at a time per 10,000 gal. Pre-dissolve in a bucket of water first to prevent localized high-pH damage to plaster or vinyl. Significant pH jumps (>0.4 in one dose) cause cloudy water — dose conservatively.",
+          incompatible: ["Muriatic acid (never mix concentrates)", "dry acid"]
+        },
+        {
+          name: "Baking Soda (Alkalinity Up)",
+          genericName: "Sodium Bicarbonate",
+          activeIngredient: "Sodium Bicarbonate (NaHCO3) 100%",
+          brands: [
+            "HTH Alkalinity Up",
+            "Clorox Pool Alkalinity Increaser",
+            "In The Swim Baking Soda",
+            "Leslie's Alkalinity Up",
+            "BioGuard Balance Pak 100"
+          ],
+          alternatives: [
+            { store: "Walmart", product: "Arm & Hammer Baking Soda (large bags)", note: "100% identical chemical to any pool store product — same sodium bicarbonate. Saves $2+ per pound vs pool store branding." },
+            { store: "Sam's Club", product: "Member's Mark Baking Soda (12-lb bags)", note: "Best price per pound — exact same chemical in bulk." },
+            { store: "Costco", product: "Arm & Hammer Baking Soda (bulk)", note: "Seasonal availability — significant savings over pool store TA increaser." }
+          ],
+          notes: "Raises Total Alkalinity with minimal pH impact (unlike soda ash). The grocery and pool store products are chemically identical — no difference in pool performance. Broadcast across the surface with pump running. Add in increments — 1.5 lbs per 10 ppm per 10,000 gal.",
+          incompatible: ["Muriatic acid (neutralizes — never mix concentrates)", "dry acid"]
+        },
+        {
+          name: "Muriatic Acid (pH Down / Acid)",
+          genericName: "Hydrochloric Acid",
+          activeIngredient: "Hydrochloric Acid (HCl) 31.45%",
+          brands: [
+            "HTH pH Down (liquid)",
+            "In The Swim Muriatic Acid",
+            "Clorox Pool pH Reducer (liquid)",
+            "Leslie's Muriatic Acid",
+            "Klean Strip Muriatic Acid"
+          ],
+          alternatives: [
+            { store: "Home Depot", product: "Klean Strip Muriatic Acid 31.45% (concrete section)", note: "EXACT same product and concentration as pool store acid — typically 20-50% cheaper. Look in the concrete/masonry aisle, not the pool section." },
+            { store: "Lowe's", product: "Muriatic Acid 31.45% (masonry/concrete aisle)", note: "Identical product, same concentration. Check diluted formulas — some are 20% and require larger doses." },
+            { store: "Tractor Supply", product: "Muriatic Acid (farm/livestock aisle)", note: "Same chemical — verify concentration. Used for livestock waterer cleaning and concrete etching." }
+          ],
+          notes: "Strong acid — always add acid TO pool water, never the reverse. Pre-dilute in a bucket of water (pour acid into water, not water into acid) before adding to pool. Pour slowly around the deep end with pump running. Lowers both pH and TA. Wear eye protection and gloves every time — no exceptions.",
+          incompatible: ["Chlorine gas forms if mixed with chlorine in any form", "soda ash / baking soda (neutralization — never mix concentrates)", "any oxidizer"]
+        },
+        {
+          name: "Dry Acid (pH Minus)",
+          genericName: "Sodium Bisulfate",
+          activeIngredient: "Sodium Bisulfate (NaHSO4) 93%+",
+          brands: [
+            "HTH pH Minus",
+            "Lo 'N Slo Granular Acid",
+            "BioGuard Optimizer pH Decreaser",
+            "In The Swim Dry Acid",
+            "Leslie's Dry Acid"
+          ],
+          alternatives: [
+            { store: "Amazon / Pool Supply", product: "Sodium Bisulfate granular (pool grade)", note: "No common consumer retail equivalent at a meaningful savings. Dry acid is more expensive than muriatic per unit of pH change — use muriatic for cost efficiency." }
+          ],
+          notes: "Safer to handle than muriatic acid — no liquid acid fumes, easier to store. Same effect as muriatic (lowers pH and TA) but at higher cost per unit of pH change. Good choice for situations where liquid acid is inconvenient or unsafe. Dissolve in a bucket of water before adding to pool.",
+          incompatible: ["Chlorine products (in concentrated dry form)", "calcium hypochlorite", "soda ash"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 4: Total Alkalinity
+    // -----------------------------------------------------------------------
+    {
+      id: "alkalinity",
+      label: "Total Alkalinity Adjusters",
+      products: [
+        {
+          name: "Sodium Bicarbonate (TA Up)",
+          genericName: "Sodium Bicarbonate",
+          activeIngredient: "Sodium Bicarbonate (NaHCO3) 100%",
+          brands: [
+            "HTH Alkalinity Up",
+            "In The Swim Total Alkalinity Increaser",
+            "Clorox Pool Alkalinity Increaser",
+            "BioGuard Balance Pak 100",
+            "Leslie's Alkalinity Up"
+          ],
+          alternatives: [
+            { store: "Walmart", product: "Arm & Hammer Baking Soda (1-lb, 4-lb, 12-lb bags)", note: "Exact same chemical. $0.55/lb at Walmart vs $2.50–$4/lb at pool store. Zero difference in pool performance." },
+            { store: "Sam's Club", product: "Member's Mark Baking Soda 12-lb", note: "Cheapest per-pound option. Perfect for high-TA pools that need repeated treatment." },
+            { store: "Costco", product: "Arm & Hammer Baking Soda bulk (seasonal)", note: "Stock up in early season. Store in airtight container." }
+          ],
+          notes: "This is the single biggest money-saving tip to share with pool owners: pool store Alkalinity Up IS baking soda at 3–5× markup. The chemical is identical — same purity, same performance. Dose: approximately 1.5 lbs raises TA by 10 ppm per 10,000 gallons.",
+          incompatible: ["Muriatic acid (do not mix concentrates)"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 5: Calcium Hardness
+    // -----------------------------------------------------------------------
+    {
+      id: "calcium",
+      label: "Calcium Hardness Adjusters",
+      products: [
+        {
+          name: "Calcium Chloride (CH Up)",
+          genericName: "Calcium Chloride",
+          activeIngredient: "Calcium Chloride (CaCl2) 77–83%",
+          brands: [
+            "HTH Calcium Up",
+            "In The Swim Calcium Hardness Increaser",
+            "Clorox Pool Calcium Hardness Increaser",
+            "Leslie's Calcium Up",
+            "Ultima Calcium Hardness Increaser"
+          ],
+          alternatives: [
+            { store: "Home Depot / Lowe's", product: "DowFlake Xtra Calcium Chloride 77–83% (25-lb or 50-lb bag)", note: "Exact same chemical as pool store CH increaser — significantly cheaper per pound in bulk hardware bags." },
+            { store: "Hardware stores / farm supply", product: "Peladow Calcium Chloride pellets 94-97%", note: "Higher concentration — adjust dose down by ~20%. Works identically." },
+            { store: "Costco / Sam's Club", product: "Calcium Chloride ice melt (verify label)", note: "CAUTION: must confirm bag says 'Calcium Chloride' specifically. Many ice melts are sodium chloride (rock salt) which does NOTHING for CH. Read the label." },
+            { store: "Tractor Supply / Farm Fleet", product: "Calcium Chloride flake or pellet (cattle/livestock grade)", note: "Same chemical. Bulk pricing available. Verify concentration on label." }
+          ],
+          notes: "Extremely exothermic when dissolved — pre-dissolve in a 5-gallon bucket of water, add calcium to water (not the reverse), stir, and allow to cool before adding to pool. Can raise water temp 10-15°F if added directly. Calcium only goes up — lowering CH requires partial drain. Never add more than 10 lbs per 10,000 gal per day.",
+          incompatible: ["Cal-Hypo (violent heat reaction if mixed dry)"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 6: Cyanuric Acid (Stabilizer)
+    // -----------------------------------------------------------------------
+    {
+      id: "cya",
+      label: "Cyanuric Acid (Stabilizer / Conditioner)",
+      products: [
+        {
+          name: "Cyanuric Acid",
+          genericName: "Cyanuric Acid",
+          activeIngredient: "Cyanuric Acid (CYA) 100%",
+          brands: [
+            "HTH Stabilizer & Conditioner",
+            "In The Swim Cyanuric Acid",
+            "Clorox Pool Stabilizer",
+            "Leslie's Stabilizer & Conditioner",
+            "BioGuard Stabilizer 100"
+          ],
+          alternatives: [
+            { store: "Pool supply / Amazon", product: "Cyanuric Acid pool-grade granular", note: "No true consumer retail equivalent at a major savings. Sam's Club sometimes carries it seasonally — compare price per pound. Online pool suppliers often beat pool store pricing by 30-50%." }
+          ],
+          notes: "The only chemical that reduces UV degradation of free chlorine — essential for outdoor pools. Add by placing in a nylon sock hung in the skimmer basket — do NOT pour directly into pool or skimmer as it dissolves very slowly and can block skimmer flow. Takes 7-14 days to fully dissolve and register accurately on a test. Raise CYA no more than 10 ppm at a time and retest. There is NO chemical that removes CYA — only partial drain dilutes it. Target 30-50 ppm (60-80 ppm for salt pools).",
+          incompatible: ["No dangerous incompatibilities — but CYA reduces chlorine effectiveness at high levels (above 80 ppm)"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 7: Algaecides
+    // -----------------------------------------------------------------------
+    {
+      id: "algaecides",
+      label: "Algaecides",
+      products: [
+        {
+          name: "PolyQuat 60% Algaecide",
+          genericName: "Polyquaternary Ammonium Chloride (PolyQuat)",
+          activeIngredient: "Poly[oxyethylene(dimethyliminio)ethylene... quat] 60%",
+          brands: [
+            "BioGuard Banish",
+            "HTH Super Algae Guard 60",
+            "In The Swim PolyQuat 60",
+            "Natural Chemistry Poly 60",
+            "Clorox Pool Algaecide 60"
+          ],
+          alternatives: [
+            { store: "Amazon / Pool Supply Online", product: "PolyQuat 60 generic", note: "Generic PolyQuat 60 formulas available from online pool suppliers — verify 60% concentration. Significant savings over branded pool store versions." }
+          ],
+          notes: "The preferred algaecide for service professionals. Compatible with all sanitizer systems including chlorine, bromine, and biguanide. Non-foaming at normal doses. Works preventatively and curatively. Use at closing and opening. Weekly maintenance dose extends algae-free intervals. Does not stain pool surfaces.",
+          incompatible: ["None with chlorine — this is the safe choice. Do NOT use ammonia-based algaecides."]
+        },
+        {
+          name: "PolyQuat 30% Algaecide (Maintenance Grade)",
+          genericName: "Polyquaternary Ammonium Chloride (PolyQuat)",
+          activeIngredient: "Poly[oxyethylene(dimethyliminio)ethylene... quat] 30%",
+          brands: [
+            "HTH Algae Guard 10",
+            "In The Swim Algaecide 30",
+            "Clorox Pool Algaecide",
+            "BioGuard Algistat"
+          ],
+          alternatives: [
+            { store: "Walmart / Home Depot", product: "Clorox Pool & Spa Algae Eliminator", note: "Verify PolyQuat formulation on label — some cheaper algaecides are copper-based. PolyQuat is preferred." }
+          ],
+          notes: "Lower concentration maintenance product. Good for weekly preventative doses. Less cost-effective than 60% for treating active algae — use 60% for any real algae problems. Non-staining, non-foaming at label doses.",
+          incompatible: ["No dangerous incompatibilities when chlorine levels are maintained"]
+        },
+        {
+          name: "Copper-Based Algaecide",
+          genericName: "Copper Chelate or Copper Sulfate",
+          activeIngredient: "Chelated Copper 7–9%",
+          brands: [
+            "BioGuard Algae All 60",
+            "HTH Algae Guard",
+            "Sparkle Chem Copper Algaecide",
+            "Natural Chemistry Copper-Based"
+          ],
+          alternatives: [
+            { store: "Walmart / Home Depot", product: "Algaecide products labeled with copper sulfate", note: "Copper algaecides are widely available but read the label. Cheaper products may have poorly chelated copper that stains more aggressively." }
+          ],
+          notes: "CAUTION: Works well against algae but raises copper levels in pool water. Copper above 0.3 ppm stains pool surfaces, especially light-colored plaster and vinyl liners (blue/green staining). Use only when necessary and monitor with a copper test. Not compatible with biguanide systems. PolyQuat is the preferred alternative for routine use.",
+          incompatible: ["Baquacil / PHMB systems", "high phosphate water (reduces effectiveness)"]
+        },
+        {
+          name: "Yellow/Mustard Algaecide",
+          genericName: "Quaternary Ammonium Compound (specialty formula)",
+          activeIngredient: "Quaternary ammonium compounds + activators",
+          brands: [
+            "Yellow Out",
+            "Yellow Treat",
+            "Mustard Buster",
+            "BioGuard Yellow Treat",
+            "In The Swim Yellow Algaecide"
+          ],
+          alternatives: [
+            { store: "Pool specialty", product: "Limited retail availability — pool store or online pool supply", note: "Specialized product — not commonly found at mass retail." }
+          ],
+          notes: "Specifically formulated for Cladophora (yellow/mustard algae) which is chlorine-resistant and clings to walls and steps. Must be used in combination with a high-FC SLAM — the algaecide alone is insufficient. Brush all surfaces thoroughly before and after application. SLAM target for mustard algae is FC = CYA × 0.60.",
+          incompatible: ["Do not mix with other algaecides simultaneously"]
+        }
+      ],
+      categoryWarning: "NEVER use ammonia-based algaecides (non-PolyQuat ammonium compounds) in a chlorinated pool. Ammonia + chlorine produces chloramine gas and creates a severe odor and health hazard. Always verify the algaecide is PolyQuat (polyquaternary ammonium) — the label should say 'PolyQuat' or 'poly[oxyethylene]' in the active ingredient."
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 8: Phosphate Removers
+    // -----------------------------------------------------------------------
+    {
+      id: "phosphates",
+      label: "Phosphate Removers",
+      products: [
+        {
+          name: "Lanthanum Chloride Phosphate Remover",
+          genericName: "Lanthanum Chloride",
+          activeIngredient: "Lanthanum Chloride (rare earth compound) ~7-10%",
+          brands: [
+            "Natural Chemistry PhosFree",
+            "Lo-Chlor Phosphate Remover",
+            "BioGuard Pool Complete",
+            "In The Swim Phosphate Remover",
+            "Orenda PR-10,000",
+            "SeaKlear Phosphate Remover"
+          ],
+          alternatives: [
+            { store: "Amazon / Pool Supply Online", product: "Generic lanthanum chloride phosphate remover", note: "Generic formulas available — compare lanthanum concentration per ounce. Brand products are often heavily marked up." }
+          ],
+          notes: "IMPORTANT application protocol: (1) Shut off pump or reduce to minimum flow. (2) Add slowly near return jets. (3) Run filter for 1 hour only. (4) BACKWASH or clean filter immediately — lanthanum creates a heavy white precipitate that clogs filters rapidly. Failure to backwash = complete filter blockage. Treat when phosphates exceed 500 ppb. High phosphates feed algae — eliminating them reduces chlorine demand.",
+          incompatible: ["Do not add with pump at high speed — white cloud needs to settle into filter"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 9: Metal Sequestrants & Stain Prevention
+    // -----------------------------------------------------------------------
+    {
+      id: "metals",
+      label: "Metal Sequestrants & Stain Prevention",
+      products: [
+        {
+          name: "Jack's Magic Blue Stuff",
+          genericName: "Phosphonate-Based Metal Sequestrant",
+          activeIngredient: "Phosphonic acid blend (sequestrant complex)",
+          brands: [
+            "Jack's Magic Blue Stuff",
+            "Jack's Magic Pink Stuff (for copper/manganese)",
+            "Jack's Magic Purple Stuff (for scale + metals)"
+          ],
+          alternatives: [
+            { store: "Pool specialty / Amazon", product: "Jack's Magic is the industry standard — limited direct substitutes", note: "Industry preferred for a reason — most generic sequestrants don't perform as reliably on iron/manganese. Worth the cost." }
+          ],
+          notes: "Industry standard for metal sequestration. Use when source water has elevated iron, copper, or manganese, and when opening or after large water additions. Holds metals in solution so they can be filtered out rather than depositing as stains. Maintain weekly or monthly — sequestrants degrade over time and need replenishment. Different formulas (Blue/Pink/Purple) target different metal profiles — read the selector guide.",
+          incompatible: ["No dangerous incompatibilities — but effectiveness is reduced below pH 7.2"]
+        },
+        {
+          name: "Natural Chemistry Metal Free",
+          genericName: "Chelating Agent / Metal Sequestrant",
+          activeIngredient: "HEDP (hydroxyethylidene diphosphonic acid) based",
+          brands: [
+            "Natural Chemistry Metal Free",
+            "BioGuard Metal Control",
+            "In The Swim Metal Control",
+            "Orenda CV-600"
+          ],
+          alternatives: [
+            { store: "Amazon / Pool Supply", product: "HEDP-based metal sequestrant (generic)", note: "Generic HEDP sequestrants available at lower cost — verify active ingredient matches." }
+          ],
+          notes: "Good general-purpose metal sequestrant. Add at opening and after any large water additions. Regular monthly maintenance dose prevents metal staining buildup over a season. Most effective when pH is in range (7.4-7.6). Separate product from phosphate removers — metal sequestrants keep metals dissolved; phosphate removers remove phosphates from water.",
+          incompatible: ["No hazardous incompatibilities"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 10: Water Clarifiers & Flocculants
+    // -----------------------------------------------------------------------
+    {
+      id: "clarifiers",
+      label: "Water Clarifiers & Flocculants",
+      products: [
+        {
+          name: "Polyelectrolyte Clarifier (Weekly)",
+          genericName: "Cationic Polyelectrolyte / Polyacrylamide",
+          activeIngredient: "Polyaluminum chloride or cationic polymer",
+          brands: [
+            "BioGuard Polysheen",
+            "HTH Super Clarifier",
+            "Natural Chemistry Pool Perfect + PHOSfree",
+            "Clorox Pool Clarifier",
+            "In The Swim Water Clarifier"
+          ],
+          alternatives: [
+            { store: "Walmart / Home Depot", product: "Clorox Pool & Spa Super Water Clarifier", note: "Good retail option. Same clarifier chemistry as pool store brands." }
+          ],
+          notes: "Clumps fine particles together (coagulation) so the filter can capture them. For mildly cloudy water or as a weekly maintenance product. Does NOT replace good filtration or chemistry balance — address root chemistry cause first. If water is cloudy from chemistry imbalance, fix the chemistry before adding clarifier.",
+          incompatible: ["No dangerous incompatibilities"]
+        },
+        {
+          name: "Flocculant (Pool Floc)",
+          genericName: "Aluminum Sulfate / Alum",
+          activeIngredient: "Aluminum Sulfate Al2(SO4)3 or polyaluminum chloride",
+          brands: [
+            "HTH Pool Flocculant",
+            "In The Swim Pool Floc",
+            "Clorox Pool Floc",
+            "BioGuard Floc Out"
+          ],
+          alternatives: [
+            { store: "Pool supply / water treatment supplier", product: "Alum (aluminum sulfate) granular — same as used in municipal water treatment", note: "Pool floc and water treatment alum are the same chemical. Agricultural/water treatment sources offer significantly lower pricing per pound." }
+          ],
+          notes: "SLAM-level clarifier — causes all suspended particles to drop rapidly to the pool floor as a visible cloud of sediment. Requires the pool to be still (pump off for 8-24 hours) while floc drops. Then vacuum ALL settled material to WASTE — do not send through filter. Run pump on WASTE setting, not filter. Expect to lose 1-3 inches of water. Not a routine product — for severe green water or post-algae cleanup.",
+          incompatible: ["Do not add while pump is running at speed — defeats the settling action"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 11: Enzyme Treatments & Borate-Based Products
+    // -----------------------------------------------------------------------
+    {
+      id: "enzymes",
+      label: "Enzyme Treatments & pH Stabilizers",
+      products: [
+        {
+          name: "Pool Perfect (Enzyme Treatment)",
+          genericName: "Naturally-derived enzyme blend (lipase/protease)",
+          activeIngredient: "Enzyme complex — lipase, protease, cellulase",
+          brands: [
+            "Natural Chemistry Pool Perfect",
+            "Natural Chemistry Pool Perfect + PHOSfree (combo)",
+            "BioGuard Pool Tonic",
+            "Leisure Time Enzyme"
+          ],
+          alternatives: [
+            { store: "Amazon / Pool Supply", product: "Generic enzyme pool treatment", note: "Generic enzyme products available — compare enzyme types on label. Natural Chemistry is the market leader for a reason — enzyme quality varies in generics." }
+          ],
+          notes: "Breaks down non-living organic waste — body oils, sunscreen, cosmetics, bird droppings — that accumulate in pool water and waterline tile. Reduces chlorine demand, prevents waterline ring buildup, and improves water clarity. Weekly maintenance dose (typically 4-8 oz per 10,000 gal) is more effective than infrequent large doses. Works gradually — noticeable improvement over 2-4 weeks.",
+          incompatible: ["No dangerous incompatibilities — enzymes are biologically degraded by high chlorine, so add when FC is under 5 ppm for best efficacy"]
+        },
+        {
+          name: "BioGuard Optimizer Plus (Borates)",
+          genericName: "Sodium Tetraborate / Borate Salt",
+          activeIngredient: "Sodium tetraborate 70%",
+          brands: [
+            "BioGuard Optimizer Plus",
+            "ProTeam Supreme Plus",
+            "Biolab Pool Perfect Booster",
+            "TurboBoost"
+          ],
+          alternatives: [
+            { store: "Pool supply / Amazon", product: "20 Mule Team Borax (household) — at 50 ppm, requires pH adjustment calculation", note: "Borax raises pH and borates simultaneously — requires muriatic acid to counteract pH rise. More complex than purpose-made pool borates but significantly cheaper. Look up the borate-from-Borax method online." }
+          ],
+          notes: "Maintains pool at 50 ppm borate, which provides three benefits: (1) stabilizes pH against drift, (2) water feels noticeably softer and silkier, (3) reduces algae growth and chlorine demand by ~15-20%. A one-time addition that persists all season unless water is diluted. Highly recommended for pools with chronic pH fluctuation problems.",
+          incompatible: ["No dangerous incompatibilities"]
+        }
+      ]
+    },
+
+    // -----------------------------------------------------------------------
+    // CATEGORY 12: Scale & Calcium Inhibitors
+    // -----------------------------------------------------------------------
+    {
+      id: "scale",
+      label: "Scale & Calcium Inhibitors",
+      products: [
+        {
+          name: "Orenda SC-1000 Scale & Metal Control",
+          genericName: "Chelant / Scale Inhibitor (HEDP-based)",
+          activeIngredient: "HEDP + chelating agents blend",
+          brands: [
+            "Orenda SC-1000",
+            "Orenda Technologies Scale Control"
+          ],
+          alternatives: [
+            { store: "Pool specialty / Orenda distributor", product: "Orenda is specifically engineered for professional pool care — limited generic substitutes", note: "Popular with service tech professionals for its consistent results on scale-prone pools." }
+          ],
+          notes: "Professional-grade scale inhibitor favored by pool service technicians for its reliability on heater scale, salt cell calcium buildup, and waterline calcium deposits. Use at opening and monthly maintenance. Particularly valuable in high-CH areas or pools with aggressive water or high heat. Regular SC-1000 treatment significantly extends heater and salt cell life.",
+          incompatible: ["No hazardous incompatibilities — compatible with all sanitizer types"]
+        },
+        {
+          name: "Natural Chemistry Scale Free",
+          genericName: "Polymaleic Acid Scale Inhibitor",
+          activeIngredient: "Polymaleic acid (scale inhibitor polymer)",
+          brands: [
+            "Natural Chemistry Scale Free",
+            "BioGuard Stain & Scale Control",
+            "In The Swim Scale Remover & Preventer",
+            "SeaKlear Scale Prevent & Remove"
+          ],
+          alternatives: [
+            { store: "Amazon / Pool Supply", product: "Generic polymaleic acid scale inhibitor", note: "Generic formulas available from online pool suppliers at 30-50% savings — verify active ingredient." }
+          ],
+          notes: "Prevents and helps remove calcium scaling on pool surfaces, tile, heaters, and salt cells. Monthly maintenance dose (following opening treatment) is the most cost-effective approach — scaling is far harder to remove than to prevent. High-LSI water (high pH + high CH + high TA) requires consistent scale inhibitor use. Calculate LSI when in doubt.",
+          incompatible: ["No hazardous incompatibilities"]
+        }
+      ]
+    }
+
+  ],  // end categories
+
+  // -------------------------------------------------------------------------
+  // Home Alternatives Quick Reference
+  // -------------------------------------------------------------------------
+  homeAlternatives: [
+    {
+      chemical: "Sodium Bicarbonate (TA Up / Alkalinity Up)",
+      homeProduct: "Arm & Hammer Baking Soda",
+      savings: "~$2.50/lb at pool store → $0.55/lb at Walmart. 100% identical chemical.",
+      caution: "Must verify pure sodium bicarbonate — no additives. Large bags at Sam's Club are cheapest per pound."
+    },
+    {
+      chemical: "Sodium Carbonate (pH Up / Soda Ash)",
+      homeProduct: "Arm & Hammer Super Washing Soda",
+      savings: "~$3/lb at pool store → $1/lb at Walmart. 100% identical.",
+      caution: "Do NOT confuse with baking soda — different chemical, different effect. Box says 'Sodium Carbonate' not 'Sodium Bicarbonate'."
+    },
+    {
+      chemical: "Muriatic Acid (pH Down)",
+      homeProduct: "Muriatic Acid from Home Depot / Lowe's Concrete Section",
+      savings: "20-50% cheaper than pool store. Identical product — same 31.45% concentration.",
+      caution: "Same chemical — same safety precautions apply. Always dilute in water before adding to pool. Look in masonry/concrete aisle, not pool aisle."
+    },
+    {
+      chemical: "Calcium Chloride (CH Up)",
+      homeProduct: "DowFlake Xtra or any ice melt bag labeled 'Calcium Chloride'",
+      savings: "Hardware store 50-lb bags are significantly cheaper than pool store per pound.",
+      caution: "Verify label says Calcium Chloride specifically — NOT Rock Salt (NaCl) or Magnesium Chloride which do nothing for CH hardness."
+    },
+    {
+      chemical: "Trichlor Tablets",
+      homeProduct: "Sam's Club / Costco 3-lb or 35-lb bucket trichlor tabs",
+      savings: "Bulk purchase saves 30-60% vs pool store per-tab pricing.",
+      caution: "Same chemical — store properly in cool, dry place away from other chemicals. Never mix with other chlorine products."
+    }
+  ]
+
+}; // end window.CHEM_CATALOG
