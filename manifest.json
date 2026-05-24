@@ -1,0 +1,13 @@
+{
+  "name": "PoolLens Field Reference",
+  "short_name": "PoolLens",
+  "description": "Pool service tech field reference — error codes, dosing calculator, checklists",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070f1c",
+  "theme_color": "#0284c7",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

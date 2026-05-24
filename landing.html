@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PoolLens — The Field Intelligence Tool Pool Techs Actually Want</title>
+  <meta name="description" content="Error codes for every major brand, chemical dosing, SLAM calculator, sand filter reference. Built for field techs. Free. Works offline.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0f172a; -webkit-font-smoothing: antialiased; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 60px;
+      background: rgba(3,105,161,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo span { color: #fff; font-weight: 900; font-size: 18px; letter-spacing: -0.3px; }
+    .nav-badge { background: rgba(255,255,255,0.18); color: #e0f2fe; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.1em; }
+    .nav-links { display: flex; gap: 12px; align-items: center; }
+    .nav-link { color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 600; text-decoration: none; }
+    .nav-cta { background: #fff; color: #0369a1; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-decoration: none; transition: all 0.15s; }
+    .nav-cta:hover { background: #e0f2fe; }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      padding-top: 60px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(165deg, #075985 0%, #0369a1 18%, #0284c7 38%, #0ea5e9 60%, #38bdf8 80%, #7dd3fc 100%);
+    }
+
+    /* Animated pool caustics */
+    .caustics {
+      position: absolute; inset: -20%;
+      background:
+        radial-gradient(ellipse 70% 40% at 20% 60%, rgba(255,255,255,0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 30% at 75% 30%, rgba(255,255,255,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 50% at 55% 80%, rgba(255,255,255,0.14) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 25% at 40% 15%, rgba(255,255,255,0.10) 0%, transparent 55%);
+      animation: caustics 14s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes caustics {
+      0%   { transform: scale(1) translate(0,0); opacity: 0.7; }
+      25%  { transform: scale(1.04) translate(1.5%, 0.8%); opacity: 0.9; }
+      50%  { transform: scale(0.97) translate(-1%, 1.5%); opacity: 1; }
+      75%  { transform: scale(1.03) translate(0.8%, -1.2%); opacity: 0.85; }
+      100% { transform: scale(1.06) translate(-1.5%, 0.5%); opacity: 0.75; }
+    }
+
+    /* Floating bubbles */
+    .bubbles { position: absolute; inset: 0; pointer-events: none; }
+    .bubble {
+      position: absolute;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      animation: bubble-rise linear infinite;
+    }
+    @keyframes bubble-rise {
+      0%   { transform: translateY(0) scale(1); opacity: 0.6; }
+      50%  { transform: translateY(-40vh) scale(1.05); opacity: 0.4; }
+      100% { transform: translateY(-80vh) scale(0.9); opacity: 0; }
+    }
+
+    .hero-inner {
+      position: relative; z-index: 2;
+      max-width: 1160px; margin: 0 auto; padding: 80px 24px 120px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+    }
+    @media (max-width: 768px) {
+      .hero-inner { grid-template-columns: 1fr; padding: 60px 20px 100px; text-align: center; }
+      .hero-actions { justify-content: center; }
+      .hero-brands { justify-content: center; }
+      .phone-float { display: none; }
+      nav { padding: 0 16px; }
+      .nav-links .nav-link { display: none; }
+    }
+
+    .hero-launch-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; font-size: 12px; font-weight: 800;
+      padding: 5px 14px; border-radius: 20px; margin-bottom: 22px;
+      backdrop-filter: blur(8px); letter-spacing: 0.03em;
+    }
+    .live-dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
+
+    .hero h1 {
+      font-size: clamp(38px, 6vw, 62px);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.06;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.15);
+    }
+    .hero h1 em { font-style: normal; color: #bae6fd; }
+
+    .hero-sub {
+      font-size: 18px; color: rgba(255,255,255,0.85);
+      line-height: 1.6; margin-bottom: 32px; max-width: 480px;
+    }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .btn-open {
+      background: #fff; color: #0369a1; font-size: 15px; font-weight: 800;
+      padding: 14px 28px; border-radius: 10px; text-decoration: none; transition: all 0.15s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px;
+    }
+    .btn-open:hover { background: #e0f2fe; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
+    .btn-waitlist {
+      background: rgba(255,255,255,0.15); color: #fff; font-size: 15px; font-weight: 700;
+      padding: 14px 24px; border-radius: 10px; text-decoration: none;
+      border: 1.5px solid rgba(255,255,255,0.4); backdrop-filter: blur(8px); transition: all 0.15s;
+    }
+    .btn-waitlist:hover { background: rgba(255,255,255,0.25); }
+
+    .hero-brands {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .brand-chip {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: 6px; backdrop-filter: blur(4px);
+    }
+
+    /* Phone mockup */
+    .phone-float { position: relative; display: flex; justify-content: center; }
+    .phone-wrap {
+      width: 240px; height: 480px;
+      background: #0f172a;
+      border-radius: 36px;
+      border: 6px solid rgba(255,255,255,0.25);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.08);
+      overflow: hidden;
+      position: relative;
+      transform: rotate(2deg);
+    }
+    .phone-notch { width: 80px; height: 6px; background: #1e293b; border-radius: 3px; margin: 10px auto 0; }
+    .phone-header { padding: 8px 12px; background: #050e1a; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #1a3352; }
+    .phone-logo-dot { width: 18px; height: 18px; background: #0284c7; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+    .phone-logo-dot svg { width: 12px; height: 12px; }
+    .phone-title { color: #f1f5f9; font-size: 11px; font-weight: 800; }
+    .phone-badge-sm { background: #071a36; color: #38bdf8; font-size: 7px; font-weight: 900; padding: 1px 4px; border-radius: 3px; }
+    .phone-body { padding: 10px; flex: 1; }
+    .phone-search { background: #0d1b2e; border: 1px solid #1a3352; border-radius: 6px; padding: 6px 10px; color: #253a50; font-size: 9px; margin-bottom: 8px; }
+    .phone-brand-row { display: flex; gap: 4px; margin-bottom: 8px; }
+    .phone-brand-chip { background: #0d1b2e; border: 1px solid #1a3352; border-radius: 5px; padding: 5px 6px; font-size: 8px; font-weight: 700; color: #4a6380; }
+    .phone-brand-chip.active { border-color: #0284c7; color: #38bdf8; background: #071a36; }
+    .phone-card { background: #0d1b2e; border: 1px solid #1a3352; border-left: 3px solid #1d4ed8; border-radius: 6px; padding: 8px; margin-bottom: 6px; }
+    .phone-card-code { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+    .phone-code-badge { background: #0a1628; color: #e2e8f0; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; font-family: monospace; }
+    .phone-sev { background: #7f1d1d; color: #f87171; font-size: 7px; font-weight: 800; padding: 1px 4px; border-radius: 3px; }
+    .phone-card-name { color: #94a3b8; font-size: 9px; }
+    .phone-card-detail { color: #253a50; font-size: 8px; margin-top: 4px; }
+    .phone-tab-bar { display: flex; background: #050e1a; border-top: 1px solid #1a3352; }
+    .phone-tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 5px 0; gap: 2px; }
+    .phone-tab-dot { width: 14px; height: 2px; background: #1a3352; border-radius: 1px; }
+    .phone-tab-dot.active { background: #38bdf8; }
+    .phone-tab-label { color: #1a3352; font-size: 6px; font-weight: 700; }
+    .phone-tab-label.active { color: #38bdf8; }
+    .phone-glow {
+      position: absolute; inset: -40px;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(56,189,248,0.2), transparent);
+      z-index: -1; animation: phone-glow 4s ease-in-out infinite alternate;
+    }
+    @keyframes phone-glow { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    /* Hero wave separator */
+    .hero-wave { position: absolute; bottom: -2px; left: 0; right: 0; line-height: 0; }
+    .hero-wave svg { width: 100%; height: auto; }
+
+    /* ─── SECTIONS ─── */
+    section { padding: 80px 24px; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      display: inline-block; background: #e0f2fe; color: #0369a1;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+      padding: 5px 14px; border-radius: 20px; margin-bottom: 14px;
+    }
+    .section-label.amber { background: #fef3c7; color: #92400e; }
+    .section-label.green { background: #d1fae5; color: #065f46; }
+    .section-label.purple { background: #ede9fe; color: #5b21b6; }
+
+    h2.section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 900; letter-spacing: -1px; color: #0f172a;
+      margin-bottom: 10px; line-height: 1.1;
+    }
+    .section-sub { font-size: 17px; color: #64748b; margin-bottom: 40px; max-width: 600px; line-height: 1.6; }
+
+    /* ─── LIVE FEATURES ─── */
+    .features-bg { background: #f8fafc; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); border-color: #38bdf8; }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 { font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: #64748b; line-height: 1.6; }
+    .feature-badge {
+      display: inline-block; margin-top: 12px;
+      background: #d1fae5; color: #065f46;
+      font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px;
+    }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      background: linear-gradient(135deg, #0369a1, #0284c7);
+      color: #fff;
+      padding: 40px 24px;
+    }
+    .stats-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; }
+    @media (max-width: 700px) { .stats-inner { grid-template-columns: repeat(2, 1fr); } }
+    .stat-num { font-size: 36px; font-weight: 900; letter-spacing: -1px; color: #fff; margin-bottom: 4px; }
+    .stat-label { font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 600; }
+
+    /* ─── COMPARISON TABLE ─── */
+    .comparison-section { background: #fff; }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .compare-table th { padding: 14px 16px; text-align: center; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 2px solid #e2e8f0; }
+    .compare-table th:first-child { text-align: left; }
+    .compare-table th.highlight { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1d4ed8; border-radius: 8px 8px 0 0; }
+    .compare-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+    .compare-table td:first-child { text-align: left; font-weight: 600; color: #334155; font-size: 13px; }
+    .compare-table tr:hover td { background: #f8fafc; }
+    .compare-table td.highlight { background: linear-gradient(180deg, #eff6ff, #fff); }
+    .compare-table td.highlight:first-child { background: none; }
+    .c-yes { color: #10b981; font-size: 18px; font-weight: 900; }
+    .c-no  { color: #ef4444; font-size: 18px; font-weight: 900; }
+    .c-partial { color: #f59e0b; font-size: 13px; font-weight: 700; }
+    .c-soon { color: #8b5cf6; font-size: 12px; font-weight: 800; }
+    .c-price { font-weight: 800; }
+    .c-price.green { color: #10b981; }
+    .c-price.red { color: #94a3b8; }
+    .compare-wrap { overflow-x: auto; border-radius: 16px; border: 1.5px solid #e2e8f0; }
+
+    /* ─── ROADMAP ─── */
+    .roadmap-bg { background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%); }
+    .phases { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .phases { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .phases { grid-template-columns: 1fr; } }
+
+    .phase-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1.5px solid #bae6fd;
+      position: relative;
+    }
+    .phase-card.active { border-color: #10b981; background: linear-gradient(135deg, #f0fdf4, #fff); }
+    .phase-num { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
+    .phase-title { font-size: 17px; font-weight: 900; color: #0f172a; margin-bottom: 6px; }
+    .phase-when { font-size: 12px; font-weight: 700; color: #0369a1; margin-bottom: 14px; }
+    .phase-when.green { color: #10b981; }
+    .phase-items { list-style: none; }
+    .phase-items li { font-size: 13px; color: #475569; padding: 4px 0; display: flex; gap: 8px; align-items: flex-start; }
+    .phase-items li::before { content: '→'; color: #38bdf8; font-weight: 800; flex-shrink: 0; }
+    .phase-card.active .phase-items li::before { color: #10b981; }
+    .phase-status {
+      position: absolute; top: 14px; right: 14px;
+      font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px;
+    }
+    .phase-status.live { background: #d1fae5; color: #065f46; }
+    .phase-status.building { background: #fef3c7; color: #92400e; }
+    .phase-status.planned { background: #ede9fe; color: #5b21b6; }
+
+    /* ─── VISION STATEMENT ─── */
+    .vision-section { background: linear-gradient(135deg, #0c1a2e, #0369a1); color: #fff; text-align: center; }
+    .vision-section h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 900; color: #fff; letter-spacing: -1px; margin-bottom: 20px; line-height: 1.1; }
+    .vision-section p { font-size: 18px; color: rgba(255,255,255,0.75); max-width: 680px; margin: 0 auto 32px; line-height: 1.7; }
+    .vs-pills { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
+    .vs-pill { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 8px; }
+    .vs-pill.highlight { background: #38bdf8; color: #0c1a2e; border-color: #38bdf8; }
+
+    /* ─── WAITLIST ─── */
+    .waitlist-section { background: #f8fafc; }
+    .waitlist-card {
+      background: linear-gradient(135deg, #0369a1, #0284c7);
+      border-radius: 24px;
+      padding: 56px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .waitlist-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 40%, rgba(255,255,255,0.1), transparent),
+        radial-gradient(ellipse 40% 60% at 80% 70%, rgba(255,255,255,0.08), transparent);
+      pointer-events: none;
+    }
+    @media (max-width: 600px) { .waitlist-card { padding: 36px 24px; } }
+
+    .waitlist-card h2 { font-size: clamp(24px, 4vw, 38px); font-weight: 900; color: #fff; margin-bottom: 12px; letter-spacing: -0.5px; position: relative; }
+    .waitlist-card p { font-size: 16px; color: rgba(255,255,255,0.8); margin-bottom: 32px; position: relative; }
+    .waitlist-form { display: flex; gap: 10px; max-width: 480px; margin: 0 auto; position: relative; }
+    @media (max-width: 540px) { .waitlist-form { flex-direction: column; } }
+    .waitlist-input {
+      flex: 1; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.35);
+      color: #fff; border-radius: 10px; padding: 14px 18px; font-size: 15px;
+      backdrop-filter: blur(8px); font-family: inherit;
+    }
+    .waitlist-input::placeholder { color: rgba(255,255,255,0.5); }
+    .waitlist-input:focus { outline: none; border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.22); }
+    .waitlist-btn {
+      background: #fff; color: #0369a1; font-size: 14px; font-weight: 800;
+      border: none; border-radius: 10px; padding: 14px 22px; cursor: pointer;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .waitlist-btn:hover { background: #e0f2fe; transform: translateY(-1px); }
+    #waitlist-msg { color: #bae6fd; font-size: 13px; margin-top: 14px; height: 20px; position: relative; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: #0c1a2e; color: rgba(255,255,255,0.5);
+      padding: 32px 24px; font-size: 13px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .footer-logo { display: flex; align-items: center; gap: 8px; color: #fff; font-weight: 800; text-decoration: none; }
+    footer a { color: rgba(255,255,255,0.45); text-decoration: none; }
+    footer a:hover { color: rgba(255,255,255,0.8); }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ NAV ═══ -->
+  <nav>
+    <div class="nav-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="7" fill="rgba(255,255,255,0.2)"/>
+        <path d="M5 20 Q9 16 13 20 Q17 24 21 20 Q25 16 29 20" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M5 25 Q9 21 13 25 Q17 29 21 25 Q25 21 29 25" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.45"/>
+        <circle cx="16" cy="11" r="5.5" fill="none" stroke="white" stroke-width="2.5"/>
+        <circle cx="16" cy="11" r="2" fill="white"/>
+      </svg>
+      <span>PoolLens</span>
+      <span class="nav-badge">FIELD</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#roadmap" class="nav-link">Roadmap</a>
+      <a href="#waitlist" class="nav-link">Early Access</a>
+      <a href="index.html" class="nav-cta">Open the App →</a>
+    </div>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+    <div class="caustics"></div>
+    <div class="bubbles">
+      <div class="bubble" style="width:12px;height:12px;left:15%;top:80%;animation-duration:8s;animation-delay:0s;"></div>
+      <div class="bubble" style="width:8px;height:8px;left:35%;top:90%;animation-duration:11s;animation-delay:2s;"></div>
+      <div class="bubble" style="width:16px;height:16px;left:60%;top:85%;animation-duration:9s;animation-delay:1s;"></div>
+      <div class="bubble" style="width:6px;height:6px;left:80%;top:88%;animation-duration:7s;animation-delay:3s;"></div>
+      <div class="bubble" style="width:10px;height:10px;left:50%;top:92%;animation-duration:12s;animation-delay:0.5s;"></div>
+    </div>
+
+    <div class="hero-inner">
+      <div>
+        <div class="hero-launch-badge">
+          <div class="live-dot"></div>
+          Live Now — Free for Pool Professionals
+        </div>
+        <h1>The Field Tool<br>Pool Techs<br><em>Actually Want</em></h1>
+        <p class="hero-sub">Error codes for every major brand. Chemistry math that works. Sand filter reference. Opening checklist. Works offline. Built for the job site, not the office.</p>
+        <div class="hero-actions">
+          <a href="index.html" class="btn-open">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Open PoolLens
+          </a>
+          <a href="#waitlist" class="btn-waitlist">Get Camera Features →</a>
+        </div>
+        <div class="hero-brands">
+          <span style="color:rgba(255,255,255,0.55);font-size:11px;font-weight:700;">Covers:</span>
+          <span class="brand-chip">Hayward</span>
+          <span class="brand-chip">Pentair</span>
+          <span class="brand-chip">Jandy</span>
+          <span class="brand-chip">Maytronics</span>
+          <span class="brand-chip">Aiper</span>
+          <span class="brand-chip">Raypak</span>
+        </div>
+      </div>
+
+      <!-- Phone mockup -->
+      <div class="phone-float">
+        <div class="phone-glow"></div>
+        <div class="phone-wrap">
+          <div class="phone-notch"></div>
+          <div class="phone-header">
+            <div class="phone-logo-dot">
+              <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="11" r="6" stroke="white" stroke-width="2.5"/><circle cx="16" cy="11" r="2" fill="white"/><path d="M6 21 Q10 17 14 21 Q18 25 22 21 Q26 17 30 21" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+            <span class="phone-title">PoolLens</span>
+            <span class="phone-badge-sm">FIELD</span>
+          </div>
+          <div class="phone-body" style="padding:10px;">
+            <div class="phone-search">🔍  Search error codes, symptoms…</div>
+            <div class="phone-brand-row">
+              <div class="phone-brand-chip active">Hayward</div>
+              <div class="phone-brand-chip">Pentair</div>
+              <div class="phone-brand-chip">Jandy</div>
+              <div class="phone-brand-chip">More</div>
+            </div>
+            <div style="color:#253a50;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;">H-Series Gas Heater · 12 models</div>
+            <div class="phone-card">
+              <div class="phone-card-code">
+                <span class="phone-code-badge">E04</span>
+                <span class="phone-sev">HIGH</span>
+              </div>
+              <div class="phone-card-name">High Limit Fault</div>
+              <div class="phone-card-detail">Low water flow · Dirty filter · Closed valves</div>
+            </div>
+            <div class="phone-card" style="border-left-color:#166534;opacity:0.7;">
+              <div class="phone-card-code"><span class="phone-code-badge">SF</span><span style="background:#0a2218;color:#4ade80;font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px;">LOW</span></div>
+              <div class="phone-card-name">Service Filter</div>
+            </div>
+            <div class="phone-card" style="border-left-color:#78350f;opacity:0.6;">
+              <div class="phone-card-code"><span class="phone-code-badge">E05</span><span class="phone-sev">HIGH</span></div>
+              <div class="phone-card-name">Pressure Switch Open</div>
+            </div>
+          </div>
+          <div class="phone-tab-bar">
+            <div class="phone-tab"><div class="phone-tab-dot active"></div><div class="phone-tab-label active">Errors</div></div>
+            <div class="phone-tab"><div class="phone-tab-dot"></div><div class="phone-tab-label">Dosing</div></div>
+            <div class="phone-tab"><div class="phone-tab-dot"></div><div class="phone-tab-label">Volume</div></div>
+            <div class="phone-tab"><div class="phone-tab-dot"></div><div class="phone-tab-label">Sand</div></div>
+            <div class="phone-tab"><div class="phone-tab-dot"></div><div class="phone-tab-label">Opening</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-wave">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,40 C240,80 480,0 720,40 C960,80 1200,20 1440,40 L1440,80 L0,80 Z" fill="#f8fafc"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ═══ STATS BAR ═══ -->
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div><div class="stat-num">6</div><div class="stat-label">Major Brands Covered</div></div>
+      <div><div class="stat-num">80+</div><div class="stat-label">Error Codes with Fix Steps</div></div>
+      <div><div class="stat-num">100%</div><div class="stat-label">Works Offline</div></div>
+      <div><div class="stat-num">$0</div><div class="stat-label">Cost to Field Techs</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ LIVE FEATURES ═══ -->
+  <section class="features-bg" id="features">
+    <div class="section-inner">
+      <div class="section-label green">LIVE NOW · FREE</div>
+      <h2 class="section-title">What Skimmer Forgot to Build</h2>
+      <p class="section-sub">Every one of these tools is live, free, and works with no internet connection. Right now, today, on any phone.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#eff6ff;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Error Code Lookup</h3>
+          <p>Every Hayward, Pentair, Jandy, Maytronics, Aiper, and Raypak error code — with causes, fix steps, and severity. No manual hunting.</p>
+          <span class="feature-badge">6 Brands · 80+ Codes</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#ecfdf5;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><path d="M6 2L6 8L3 16c-1 3 1 6 5 6h8c4 0 6-3 5-6L18 8V2"/><line x1="6" y1="2" x2="18" y2="2"/><path d="M7 12h10"/></svg>
+          </div>
+          <h3>Chemical Dosing Calculator</h3>
+          <p>Pool Math verified formulas for FC, pH, TA, CH, and CYA. Enter readings, get exact amounts. Liquid chlorine to baking soda — all of it.</p>
+          <span class="feature-badge">Pool Math Verified</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fff7ed;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>SLAM Calculator</h3>
+          <p>FC target = CYA × multiplier for green pool, mustard algae, black algae, or maintenance shock. Shows exactly how much chlorine to add right now.</p>
+          <span class="feature-badge">TFP Method</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#f5f3ff;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          </div>
+          <h3>Sand Filter Reference</h3>
+          <p>Look up sand weight, flow rate, and compatible models by tank diameter. Backwash protocol. Alternative media ratios. No guessing.</p>
+          <span class="feature-badge">11 Tank Sizes</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#f0f9ff;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"><path d="M4 22V6l8-4 8 4v16"/><path d="M4 12h16"/><path d="M12 2v20"/></svg>
+          </div>
+          <h3>Pool Volume Calculator</h3>
+          <p>Rectangle, oval, round, kidney, L-shape, freeform. Enter dimensions, get gallons. Autofills the dosing calculator so you never mis-dose.</p>
+          <span class="feature-badge">6 Pool Shapes</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#f0fdf4;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <h3>Opening Season Checklist</h3>
+          <p>28-step checklist across 4 phases: Before Filling, Equipment Start, Water Chemistry, Filter & Cleanup. Saves progress between jobs.</p>
+          <span class="feature-badge">Saves to Device</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ COMPARISON ═══ -->
+  <section class="comparison-section" id="compare">
+    <div class="section-inner">
+      <div class="section-label">BY THE NUMBERS</div>
+      <h2 class="section-title">PoolLens vs. Everyone Else</h2>
+      <p class="section-sub">Every app they charge you $50/month for — none of them built what techs actually need on the job.</p>
+
+      <div class="compare-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th style="min-width:200px;">Feature</th>
+              <th class="highlight" style="min-width:110px;">PoolLens</th>
+              <th style="min-width:90px;">Skimmer</th>
+              <th style="min-width:90px;">Pool Brain</th>
+              <th style="min-width:90px;">Pooli</th>
+              <th style="min-width:90px;">Jobber</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Error codes — all major brands</td><td class="highlight"><span class="c-yes">✓</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>Chemical dosing (Pool Math)</td><td class="highlight"><span class="c-yes">✓</span></td><td><span class="c-partial">Basic</span></td><td><span class="c-partial">Beta</span></td><td><span class="c-yes">✓</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>SLAM calculator</td><td class="highlight"><span class="c-yes">✓</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>Sand filter calculator</td><td class="highlight"><span class="c-yes">✓</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>Works offline</td><td class="highlight"><span class="c-yes">✓</span></td><td><span class="c-partial">Building</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>Camera test strip reading</td><td class="highlight"><span class="c-soon">Coming</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-yes">✓</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>Equipment photo → model ID</td><td class="highlight"><span class="c-soon">Coming</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td><td><span class="c-no">✗</span></td></tr>
+            <tr><td>Route planning</td><td class="highlight"><span class="c-soon">Coming</span></td><td><span class="c-yes">✓</span></td><td><span class="c-partial">Basic</span></td><td><span class="c-no">✗</span></td><td><span class="c-yes">✓</span></td></tr>
+            <tr><td>Customer CRM</td><td class="highlight"><span class="c-soon">Coming</span></td><td><span class="c-yes">✓</span></td><td><span class="c-yes">✓</span></td><td><span class="c-partial">Basic</span></td><td><span class="c-yes">✓</span></td></tr>
+            <tr>
+              <td style="font-weight:800;color:#0f172a;">Monthly cost</td>
+              <td class="highlight"><span class="c-price green">FREE</span></td>
+              <td><span class="c-price red">$49-99/mo</span></td>
+              <td><span class="c-price red">$49/mo</span></td>
+              <td><span class="c-price red">$9.99/mo</span></td>
+              <td><span class="c-price red">$69+/mo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px;color:#94a3b8;margin-top:12px;">Data sourced from published feature pages and release notes. Last verified May 2026.</p>
+    </div>
+  </section>
+
+  <!-- ═══ ROADMAP ═══ -->
+  <section class="roadmap-bg" id="roadmap">
+    <div class="section-inner">
+      <div class="section-label amber">WHAT'S COMING</div>
+      <h2 class="section-title">From Field Tool to Full Platform</h2>
+      <p class="section-sub">Everything Skimmer has. Everything Pool Brain has. Plus the field intelligence neither of them will ever build.</p>
+
+      <div class="phases">
+        <div class="phase-card active">
+          <span class="phase-status live">Live</span>
+          <div class="phase-num">Phase 1</div>
+          <div class="phase-title">Field Intelligence</div>
+          <div class="phase-when green">Available Now</div>
+          <ul class="phase-items">
+            <li>Error codes — 6 brands</li>
+            <li>Chemical dosing calc</li>
+            <li>SLAM calculator</li>
+            <li>Sand filter reference</li>
+            <li>Volume calculator</li>
+            <li>Opening checklist</li>
+          </ul>
+        </div>
+        <div class="phase-card">
+          <span class="phase-status building">Building</span>
+          <div class="phase-num">Phase 2</div>
+          <div class="phase-title">Camera AI</div>
+          <div class="phase-when">Summer 2026</div>
+          <ul class="phase-items">
+            <li>Test strip photo reader</li>
+            <li>Equipment photo → model ID</li>
+            <li>Auto-log chemistry from photo</li>
+            <li>Works in sunlight + shade</li>
+          </ul>
+        </div>
+        <div class="phase-card">
+          <span class="phase-status planned">Planned</span>
+          <div class="phase-num">Phase 3</div>
+          <div class="phase-title">Customer &amp; Routes</div>
+          <div class="phase-when">Fall 2026</div>
+          <ul class="phase-items">
+            <li>Per-pool chemistry history</li>
+            <li>Visit report generator</li>
+            <li>Customer portal (homeowner)</li>
+            <li>Route &amp; scheduling</li>
+            <li>Parts cross-reference</li>
+          </ul>
+        </div>
+        <div class="phase-card">
+          <span class="phase-status planned">Planned</span>
+          <div class="phase-num">Phase 4</div>
+          <div class="phase-title">Full Platform</div>
+          <div class="phase-when">2027</div>
+          <ul class="phase-items">
+            <li>Invoicing &amp; billing</li>
+            <li>Inventory tracking</li>
+            <li>Chemical ordering (PoolCorp)</li>
+            <li>Multi-tech management</li>
+            <li>Analytics &amp; reporting</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ VISION STATEMENT ═══ -->
+  <section class="vision-section">
+    <div class="section-inner">
+      <h2>"Built backwards from what techs need at the job site.<br>Not forwards from what office software already had."</h2>
+      <p>Skimmer built routing and billing, then said they'd add field intelligence later. Pool Brain built a CRM, then said they'd add AI later. We built the field intelligence first — because that's the part that actually matters between arrival and departure.</p>
+      <div class="vs-pills">
+        <span class="vs-pill">Works offline</span>
+        <span class="vs-pill">All brands in one place</span>
+        <span class="vs-pill highlight">Camera AI coming</span>
+        <span class="vs-pill">Pool Math formulas</span>
+        <span class="vs-pill">Free for field techs</span>
+      </div>
+      <a href="index.html" style="display:inline-block;background:#38bdf8;color:#0c1a2e;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;transition:all 0.15s;" onmouseover="this.style.background='#7dd3fc'" onmouseout="this.style.background='#38bdf8'">Open PoolLens — It's Free →</a>
+    </div>
+  </section>
+
+  <!-- ═══ WAITLIST ═══ -->
+  <section class="waitlist-section" id="waitlist">
+    <div class="section-inner">
+      <div class="waitlist-card">
+        <h2>Get the Camera Features When They Drop</h2>
+        <p>Test strip reading. Equipment photo ID. First 200 techs on the list get early access and shape what we build next.</p>
+        <form class="waitlist-form" onsubmit="submitWaitlist(event)">
+          <input class="waitlist-input" type="email" id="wl-email" placeholder="your@email.com" required>
+          <button type="submit" class="waitlist-btn" id="wl-btn">Get Early Access</button>
+        </form>
+        <div id="waitlist-msg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <a href="landing.html" class="footer-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0284c7"/><path d="M5 20 Q9 16 13 20 Q17 24 21 20 Q25 16 29 20" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="16" cy="11" r="5.5" fill="none" stroke="white" stroke-width="2.5"/><circle cx="16" cy="11" r="2" fill="white"/></svg>
+      PoolLens
+    </a>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <a href="index.html">Open the App</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="mailto:hello@poolens.app">Contact</a>
+    </div>
+    <span>© 2026 PoolLens. Built for pool professionals.</span>
+  </footer>
+
+  <script>
+    async function submitWaitlist(e) {
+      e.preventDefault();
+      const email = document.getElementById('wl-email').value.trim();
+      const btn = document.getElementById('wl-btn');
+      const msg = document.getElementById('waitlist-msg');
+      btn.textContent = 'Joining…';
+      btn.disabled = true;
+      try {
+        // Store locally for now; CF function endpoint when ready
+        const existing = JSON.parse(localStorage.getItem('poolens-wl') || '[]');
+        if (!existing.includes(email)) existing.push(email);
+        localStorage.setItem('poolens-wl', JSON.stringify(existing));
+        // Try CF function if available
+        await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, source: 'landing' })
+        }).catch(() => {});
+        msg.style.color = '#86efac';
+        msg.textContent = "✓ You're on the list. We'll reach out when camera features drop.";
+        document.getElementById('wl-email').value = '';
+      } catch(err) {
+        msg.style.color = '#fca5a5';
+        msg.textContent = 'Something went wrong. Email hello@poolens.app directly.';
+      }
+      btn.textContent = 'Get Early Access';
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>
