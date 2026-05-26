@@ -1,0 +1,53 @@
+# SplashLens Store Wrapper Handoff
+
+Updated: May 26, 2026
+
+## Current App Target
+
+- URL: `https://app.splashlens.com`
+- Type: offline-first PWA
+- Monetization: free core tools plus PartSnap Pro checkout links
+- Offline behavior: manual lookup, calculators, filter guides, checklists, reports, and cached app shell
+- Online-only behavior: Error Scan, PartSnap, and Test Strip AI scanner
+
+## Android Fast Path
+
+Submit a Trusted Web Activity wrapper to Google Play around `https://app.splashlens.com`.
+
+Suggested listing copy:
+
+> SplashLens is a free field rescue app for pool service technicians. Search equipment error codes, calculate chemical doses, create visit notes, follow filter guides, and use the online AI scanner for equipment displays, pool parts, and test strips.
+
+Short description:
+
+> Free pool tech field app: error codes, dosing, service notes, and online AI scanner.
+
+## iOS Fast Path
+
+Use Capacitor or Median.co to wrap `https://app.splashlens.com`.
+
+Review framing:
+
+- This is a utility/reference app for pool service professionals.
+- Manual tools work offline after first load.
+- AI camera scanning requires internet and is user-initiated.
+- No account is required.
+- Pool/customer data is stored locally on device browser storage.
+
+## Store Screenshot Checklist
+
+Capture these screens on phone dimensions:
+
+- Home/rescue screen with quick actions.
+- Error-code lookup result.
+- Chemical dosing calculator.
+- AI scanner mode selector or scan result.
+- PartSnap result with part/search workflow.
+- Service note/report screen.
+
+## Known Launch Constraints
+
+- Native store submission still needs Mac/Xcode or store-wrapper console access.
+- App Store Connect and Google Play Console final actions cannot be completed from this Windows repo alone.
+- If Apple asks about data collection, use the public privacy page: `https://splashlens.com/privacy.html`.
+- If Google asks for data safety, declare local app data storage, user-submitted images for AI scanner processing, email collection only on waitlist forms, and Stripe payment processing through Stripe.

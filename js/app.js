@@ -2327,6 +2327,7 @@ const SCAN_PRO_KEY = 'sl_partsnap_pro_local';
 const PARTSNAP_MONTHLY_LINK = '/api/checkout?plan=monthly';
 const PARTSNAP_YEARLY_LINK = '/api/checkout?plan=yearly';
 const AFFILIATE_TAG = 'YOUR_TAG';
+const SPLASHLENS_EVENT_ENDPOINT = 'https://splashlens.com/api/event';
 
 function initScanTab() {
   updateAIStatusBar();
@@ -2576,6 +2577,26 @@ function trackSplashLensEvent(name, props = {}) {
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({ event: name, ...props, ts: new Date().toISOString() });
   if (window.plausible) window.plausible(name, { props });
+
+  const payload = JSON.stringify({
+    event: name,
+    source: 'app',
+    path: `${window.location.pathname}${window.location.search}`,
+    props,
+  });
+
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(SPLASHLENS_EVENT_ENDPOINT, new Blob([payload], { type: 'application/json' }));
+      return;
+    }
+    fetch(SPLASHLENS_EVENT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
 }
 
 async function callAIScan(canvas, mode, result, status) {
