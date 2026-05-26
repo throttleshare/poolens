@@ -2328,6 +2328,7 @@ const PARTSNAP_MONTHLY_LINK = '/api/checkout?plan=monthly';
 const PARTSNAP_YEARLY_LINK = '/api/checkout?plan=yearly';
 const AFFILIATE_TAG = 'YOUR_TAG';
 const SPLASHLENS_EVENT_ENDPOINT = 'https://splashlens.com/api/event';
+const STORE_SHELL_KEY = 'sl_store_shell_mode';
 
 function initScanTab() {
   updateAIStatusBar();
@@ -2529,6 +2530,26 @@ function isPartSnapPro() {
   return localStorage.getItem(SCAN_PRO_KEY) === '1';
 }
 
+function getStoreShellMode() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const requested = (params.get('store') || '').toLowerCase();
+    if (['ios', 'android', 'native'].includes(requested)) {
+      localStorage.setItem(STORE_SHELL_KEY, requested);
+      return requested;
+    }
+    if (requested === '0' || requested === 'web') {
+      localStorage.removeItem(STORE_SHELL_KEY);
+      return '';
+    }
+  } catch {}
+  return localStorage.getItem(STORE_SHELL_KEY) || '';
+}
+
+function isStoreShellMode() {
+  return !!getStoreShellMode();
+}
+
 function canUseAIScan() {
   return isPartSnapPro() || getScanUsage().count < SCAN_LIMIT_FREE;
 }
@@ -2558,6 +2579,18 @@ function unlockPartSnapProLocal() {
 function showScanLimitModal(result, status) {
   if (status) status.textContent = 'FREE SCAN LIMIT REACHED';
   const usage = getScanUsage();
+  if (isStoreShellMode()) {
+    trackSplashLensEvent('store_scan_limit_reached', { count: usage.count, store: getStoreShellMode() });
+    if (result) {
+      result.innerHTML = `
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:18px;margin:0 0 14px;text-align:center;border-left:4px solid #0284c7;">
+          <p style="color:#f1f5f9;font-size:19px;font-weight:900;margin-bottom:6px;">You've used ${usage.count} of ${SCAN_LIMIT_FREE} free AI scans this month.</p>
+          <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin-bottom:14px;">Manual code lookup, dosing, reports, filters, and checklists stay free. This store build is free-core only while native billing is finalized.</p>
+          <button onclick="setScanMode('lookup');document.getElementById('scan-result').innerHTML=''" style="background:#0284c7;color:#fff;border:0;border-radius:10px;padding:11px 14px;font-size:12px;font-weight:800;cursor:pointer;width:100%;">Use Manual Lookup</button>
+        </div>`;
+    }
+    return;
+  }
   if (result) {
     result.innerHTML = `
       <div style="background:#1e293b;border:1px solid #7c3aed;border-radius:14px;padding:18px;margin:0 0 14px;text-align:center;border-left:4px solid #7c3aed;">
