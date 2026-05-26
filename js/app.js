@@ -2321,6 +2321,13 @@ let _scanBrand     = null;   // null = all brands
 let _flashOn       = false;
 let _flashTrack    = null;
 
+const SCAN_LIMIT_FREE = 10;
+const SCAN_USAGE_KEY = 'pl_scans_month';
+const SCAN_PRO_KEY = 'sl_partsnap_pro_local';
+const PARTSNAP_MONTHLY_LINK = '/api/checkout?plan=monthly';
+const PARTSNAP_YEARLY_LINK = '/api/checkout?plan=yearly';
+const AFFILIATE_TAG = 'YOUR_TAG';
+
 function initScanTab() {
   updateAIStatusBar();
   setScanMode(_scanMode || 'camera');
@@ -2332,8 +2339,9 @@ function updateAIStatusBar() {
   const label = document.getElementById('scan-ai-label');
   if (!dot || !label) return;
   if (navigator.onLine) {
+    const usage = getScanUsage();
     dot.style.background   = '#16a34a';
-    label.textContent      = 'AI SCANNER READY';
+    label.textContent      = isPartSnapPro() ? 'PARTSNAP PRO READY' : `AI READY - ${Math.max(0, SCAN_LIMIT_FREE - usage.count)} FREE SCANS LEFT`;
     label.style.color      = '#4ade80';
   } else {
     dot.style.background   = '#64748b';
@@ -2456,6 +2464,10 @@ function captureAndAnalyze() {
 
   // AI-first path: call CF Worker when online
   if (navigator.onLine) {
+    if (!canUseAIScan()) {
+      showScanLimitModal(result, status);
+      return;
+    }
     const aiMode = isPartsScan ? 'parts_snap' : isStripScan ? 'test_strip' : 'error_code';
     callAIScan(canvas, aiMode, result, status);
     return;
@@ -2490,6 +2502,82 @@ function captureAndAnalyze() {
   showCaptureWithManualEntry(canvas, '', result, status);
 }
 
+function aiScanLabel() {
+  if (_scanMode === 'parts') return 'parts_snap';
+  if (_scanMode === 'strip') return 'test_strip';
+  return 'error_code';
+}
+
+function currentScanMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function getScanUsage() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SCAN_USAGE_KEY) || '{}');
+    if (raw.month === currentScanMonth()) return { month: raw.month, count: Number(raw.count) || 0 };
+  } catch {}
+  return { month: currentScanMonth(), count: 0 };
+}
+
+function saveScanUsage(usage) {
+  localStorage.setItem(SCAN_USAGE_KEY, JSON.stringify({ month: usage.month, count: usage.count }));
+}
+
+function isPartSnapPro() {
+  return localStorage.getItem(SCAN_PRO_KEY) === '1';
+}
+
+function canUseAIScan() {
+  return isPartSnapPro() || getScanUsage().count < SCAN_LIMIT_FREE;
+}
+
+function recordAIScan(mode) {
+  if (!isPartSnapPro()) {
+    const usage = getScanUsage();
+    usage.count += 1;
+    saveScanUsage(usage);
+  }
+  trackSplashLensEvent('ai_scan_started', { mode });
+  updateAIStatusBar();
+}
+
+function unlockPartSnapProLocal() {
+  localStorage.setItem(SCAN_PRO_KEY, '1');
+  updateAIStatusBar();
+  const result = document.getElementById('scan-result');
+  if (result) {
+    result.innerHTML = `<div style="background:#052e16;border:1px solid #16a34a;border-radius:12px;padding:18px;text-align:center;">
+      <p style="color:#86efac;font-size:15px;font-weight:900;margin-bottom:6px;">PartSnap Pro enabled on this device</p>
+      <p style="color:#bbf7d0;font-size:12px;line-height:1.5;">Unlimited AI scans are unlocked locally. If you use another phone, unlock it there after checkout too.</p>
+    </div>`;
+  }
+}
+
+function showScanLimitModal(result, status) {
+  if (status) status.textContent = 'FREE SCAN LIMIT REACHED';
+  const usage = getScanUsage();
+  if (result) {
+    result.innerHTML = `
+      <div style="background:#1e293b;border:1px solid #7c3aed;border-radius:14px;padding:18px;margin:0 0 14px;text-align:center;border-left:4px solid #7c3aed;">
+        <p style="color:#f1f5f9;font-size:19px;font-weight:900;margin-bottom:6px;">You've used ${usage.count} of ${SCAN_LIMIT_FREE} free AI scans this month.</p>
+        <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin-bottom:14px;">Manual code lookup, dosing, reports, filters, and checklists stay free. Upgrade PartSnap Pro for unlimited AI scanner use.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <a href="${PARTSNAP_MONTHLY_LINK}" target="_blank" rel="noopener" onclick="trackSplashLensEvent('upgrade_click',{plan:'monthly'})" style="background:#0284c7;color:#fff;text-decoration:none;border-radius:10px;padding:12px 8px;font-size:13px;font-weight:900;">$4.99 / mo</a>
+          <a href="${PARTSNAP_YEARLY_LINK}" target="_blank" rel="noopener" onclick="trackSplashLensEvent('upgrade_click',{plan:'yearly'})" style="background:#16a34a;color:#fff;text-decoration:none;border-radius:10px;padding:12px 8px;font-size:13px;font-weight:900;">$39 / yr</a>
+        </div>
+        <button onclick="unlockPartSnapProLocal()" style="background:#334155;color:#cbd5e1;border:1px solid #475569;border-radius:10px;padding:11px 14px;font-size:12px;font-weight:800;cursor:pointer;width:100%;">I already upgraded - unlock this device</button>
+        <p style="color:#64748b;font-size:10px;line-height:1.4;margin-top:10px;">Launch note: checkout is live; device unlock keeps the season launch fast while account sync is built.</p>
+      </div>`;
+  }
+}
+
+function trackSplashLensEvent(name, props = {}) {
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: name, ...props, ts: new Date().toISOString() });
+  if (window.plausible) window.plausible(name, { props });
+}
+
 async function callAIScan(canvas, mode, result, status) {
   try {
     const base64 = canvas.toDataURL('image/jpeg', 0.85).replace(/^data:image\/jpeg;base64,/, '');
@@ -2500,6 +2588,7 @@ async function callAIScan(canvas, mode, result, status) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { result: aiResult } = await res.json();
+    recordAIScan(mode);
 
     if (mode === 'parts_snap') {
       renderPartsSnapResult(aiResult, result, status);
@@ -2573,6 +2662,9 @@ function renderPartsSnapResult(ai, result, status) {
 
   const condColor = { new:'#16a34a', good:'#16a34a', worn:'#d97706', damaged:'#dc2626', unknown:'#64748b' }[condition] || '#64748b';
 
+  const buyLinks = renderPartBuyLinks(searchTerms, partNumber, manufacturer, component);
+  trackSplashLensEvent('partsnap_result', { confidence: confidence || 'unknown', category: category || 'unknown' });
+
   result.innerHTML = `
     <div style="background:#1e293b;border:1px solid ${low?'#334155':'#7c3aed'};border-radius:12px;padding:16px;margin-bottom:10px;border-left:4px solid ${low?'#334155':'#7c3aed'};">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
@@ -2597,12 +2689,28 @@ function renderPartsSnapResult(ai, result, status) {
           ${searchTerms.map(t => `<span style="background:#0f172a;color:#7dd3fc;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;">${t}</span>`).join('')}
         </div>
       ` : ''}
+      ${buyLinks}
       ${low ? `<p style="color:#64748b;font-size:12px;margin-top:12px;text-align:center;">Try getting closer, better lighting, or a different angle</p>` : ''}
     </div>
     <div style="text-align:center;padding:8px 0 16px;">
       <button onclick="setScanMode('parts');document.getElementById('scan-result').innerHTML=''" style="background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer;">Scan Another Part</button>
     </div>
   `;
+}
+
+function renderPartBuyLinks(searchTerms, partNumber, manufacturer, component) {
+  const rawTerm = partNumber || searchTerms?.[0] || [manufacturer, component].filter(Boolean).join(' ');
+  if (!rawTerm) return '';
+  const q = encodeURIComponent(rawTerm);
+  const tag = AFFILIATE_TAG && AFFILIATE_TAG !== 'YOUR_TAG' ? `&tag=${encodeURIComponent(AFFILIATE_TAG)}` : '';
+  return `
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #334155;">
+      <p style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">BUY / PRICE CHECK</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <a href="https://www.amazon.com/s?k=${q}${tag}" target="_blank" rel="noopener" onclick="trackSplashLensEvent('affiliate_click',{store:'amazon'})" style="background:#f59e0b;color:#111827;text-decoration:none;text-align:center;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:900;">Amazon</a>
+        <a href="https://www.google.com/search?q=${q}+pool+part" target="_blank" rel="noopener" onclick="trackSplashLensEvent('part_search_click',{store:'google'})" style="background:#0f172a;color:#7dd3fc;text-decoration:none;text-align:center;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:900;border:1px solid #334155;">Search Web</a>
+      </div>
+    </div>`;
 }
 
 function extractErrorCodes(text) {
