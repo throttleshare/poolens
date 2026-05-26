@@ -1,4 +1,6 @@
-# PoolLens — Business Case
+# SplashLens — Business Case
+
+> Current direction, May 2026: SplashLens is being treated as a free field-rescue app during pool season. The old paid-first PoolLens Pro / Learn assumptions below are legacy planning notes, not the active launch plan. Active priority is adoption: scan/search error codes, calculate doses, write service notes, and collect Route Ready pilot interest for free until real usage tells us what to monetize.
 **Version 1.0 | May 2026 | Confidential — Founder Working Document**
 
 ---

@@ -1,7 +1,7 @@
 {
   "name": "SplashLens Field Reference",
   "short_name": "SplashLens",
-  "description": "Pool service tech field reference - error codes, dosing calculators, AI scanner, SLAM tracker, filter guides, checklists. Works offline.",
+  "description": "Free pool service field rescue app - error codes, dosing calculators, online AI scanner, SLAM tracker, filter guides, checklists. Manual tools work offline.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f0f9ff",

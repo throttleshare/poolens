@@ -1,4 +1,4 @@
-// PoolLens Error Code Database
+// SplashLens Error Code Database
 // Sources: Hayward, Pentair, Jandy official service manuals + tech bulletins
 // Maytronics/Aiper: LED indicator patterns (no text codes on display)
 

@@ -63,6 +63,28 @@
     .btn-calc { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none; border-radius: 10px; padding: 14px; font-weight: 800; font-size: 15px; width: 100%; cursor: pointer; letter-spacing: 0.03em; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
     .btn-calc:active { transform: scale(0.98); opacity: 0.88; }
 
+    /* Field rescue home */
+    .rescue-hero { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 8px 22px rgba(15,23,42,0.18); }
+    .rescue-kicker { color: #7dd3fc; font-size: 10px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 7px; }
+    .rescue-title { color: #ffffff; font-size: 24px; line-height: 1.05; font-weight: 900; margin-bottom: 7px; letter-spacing: 0; }
+    .rescue-sub { color: #cbd5e1; font-size: 13px; line-height: 1.45; margin-bottom: 14px; }
+    .rescue-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .rescue-action { background: #ffffff; color: #0f172a; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 10px; min-height: 84px; cursor: pointer; text-align: left; display: flex; flex-direction: column; justify-content: space-between; -webkit-tap-highlight-color: transparent; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+    .rescue-action strong { display: block; font-size: 14px; line-height: 1.15; font-weight: 900; letter-spacing: 0; }
+    .rescue-action span { display: block; color: #64748b; font-size: 11px; line-height: 1.25; margin-top: 7px; }
+    .rescue-action.primary { background: #0284c7; color: #ffffff; border-color: #38bdf8; }
+    .rescue-action.primary span { color: #dff6ff; }
+    .rescue-proof { color: #94a3b8; font-size: 11px; line-height: 1.4; margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; }
+    .rescue-proof strong { color: #ffffff; }
+    .rescue-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 12px; }
+    .rescue-chip { background: #ffffff; border: 1px solid #bae6fd; border-radius: 9px; padding: 8px 6px; text-align: center; }
+    .rescue-chip strong { display: block; color: #0369a1; font-size: 14px; font-weight: 900; line-height: 1; }
+    .rescue-chip span { display: block; color: #64748b; font-size: 10px; font-weight: 700; margin-top: 3px; }
+    @media (max-width: 360px) {
+      .rescue-actions { grid-template-columns: 1fr; }
+      .rescue-strip { grid-template-columns: 1fr 1fr; }
+    }
+
     /* Result display */
     .result-wrap { background: #eff6ff; border: 2px solid #93c5fd; border-radius: 12px; padding: 18px; }
     .result-amount { font-size: 52px; font-weight: 900; color: #0369a1; line-height: 1; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; }
@@ -163,6 +185,37 @@
 
     <!-- ─── ERRORS ─── -->
     <div id="tab-errors" class="tab-panel active" style="padding:14px;">
+
+      <section class="rescue-hero">
+        <p class="rescue-kicker">Field rescue</p>
+        <h1 class="rescue-title">Stuck at the equipment pad?</h1>
+        <p class="rescue-sub">Scan the display, search the code, calculate the dose, or write the service note. No account. Core tools are free.</p>
+        <div class="rescue-actions">
+          <button type="button" class="rescue-action primary" onclick="showTab('scan')">
+            <strong>Scan Error Code</strong>
+            <span>Online AI scanner with manual lookup fallback.</span>
+          </button>
+          <button type="button" class="rescue-action" onclick="focusErrorSearch()">
+            <strong>Search Code</strong>
+            <span>500+ codes across major pool brands.</span>
+          </button>
+          <button type="button" class="rescue-action" onclick="focusVolumeInput()">
+            <strong>Calculate Dose</strong>
+            <span>Fast pool math for the stop you are on.</span>
+          </button>
+          <button type="button" class="rescue-action" onclick="quickServiceNote()">
+            <strong>Make Service Note</strong>
+            <span>Copy, share, or print a clean visit report.</span>
+          </button>
+        </div>
+        <p class="rescue-proof"><strong>Manual lookup works offline after first load.</strong> AI camera scan requires internet. PoolBrain and Skimmer run the company; SplashLens saves the stop.</p>
+      </section>
+
+      <div class="rescue-strip" aria-label="SplashLens field tools">
+        <div class="rescue-chip"><strong>500+</strong><span>Error codes</span></div>
+        <div class="rescue-chip"><strong>$0</strong><span>No card</span></div>
+        <div class="rescue-chip"><strong>Offline</strong><span>Manual tools</span></div>
+      </div>
 
       <div style="position:relative;margin-bottom:12px;">
         <svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

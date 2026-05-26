@@ -1,4 +1,4 @@
-// PoolLens Chemical & Equipment Data
+// SplashLens Chemical & Equipment Data
 // Dosing factors sourced from Pool Math (TFP) verified formulas
 // Volume formulas: standard industry calculations
 

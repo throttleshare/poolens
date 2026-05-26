@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPools();
   initRoute();
   checkOfflineStatus();
+  initDeepLink();
 });
 
 // ═══════════════════════════════════════════
@@ -55,6 +56,12 @@ function showTab(name) {
   if (name === 'route')  renderRoute();
   if (name === 'scan')   initScanTab();
   if (name === 'dosing') renderSlamBanner();
+}
+
+function initDeepLink() {
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  const allowed = new Set(['errors', 'dosing', 'report', 'guide', 'pools', 'scan', 'volume', 'sand', 'route']);
+  if (tab && allowed.has(tab)) showTab(tab);
 }
 
 // ═══════════════════════════════════════════
@@ -86,6 +93,28 @@ function focusVolumeInput() {
   setTimeout(() => {
     const el = document.getElementById('dose-volume');
     if (el) { el.focus(); el.select(); }
+  }, 80);
+}
+
+function focusErrorSearch() {
+  showTab('errors');
+  setTimeout(() => {
+    const el = document.getElementById('error-search');
+    if (!el) return;
+    el.focus();
+    el.select();
+    el.scrollIntoView({ behavior: 'auto', block: 'center' });
+  }, 80);
+}
+
+function quickServiceNote() {
+  showTab('report');
+  setTimeout(() => {
+    const work = document.getElementById('rpt-work');
+    if (work && !work.value) {
+      work.value = 'Cleaned pool, checked equipment, tested and balanced water.';
+    }
+    work?.focus();
   }, 80);
 }
 
