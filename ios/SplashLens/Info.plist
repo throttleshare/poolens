@@ -22,6 +22,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>SplashLens uses the camera only when you choose the optional scanner to review equipment displays, parts, or test strips.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
