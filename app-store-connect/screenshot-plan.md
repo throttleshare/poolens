@@ -1,55 +1,31 @@
-# SplashLens iOS Screenshot Plan
+# SplashLens Screenshot Plan
 
-Use current iPhone simulator sizes required by App Store Connect. Capture from the native wrapper when possible; otherwise capture the wrapper URL in a mobile viewport and replace with native screenshots before final upload.
+Use 6.7-inch iPhone screenshots first. Add other sizes only if App Store Connect asks for them.
 
 ## Required Shots
 
-1. Home / field rescue dashboard
-   - Show SplashLens branding.
-   - Show quick access to lookup, calculators, scanner, and notes.
+1. Home/rescue quick actions.
+   Caption: Field tools for the stop you are on
 
-2. Error-code lookup
-   - Show a realistic lookup result.
-   - Avoid any copy that implies guaranteed diagnosis or manufacturer endorsement.
+2. Error-code lookup result.
+   Caption: Search codes across major pool brands
 
-3. Chemical/service calculator
-   - Show inputs and calculated field math.
-   - Keep visible language practical and user-verified.
+3. Chemical dosing calculator.
+   Caption: Fast pool math in the field
 
-4. AI scanner entry or result
-   - Show user-initiated scanner mode.
-   - Keep verification language visible.
-   - Do not imply unlimited scans.
+4. AI scanner mode selector or scan result with verification language visible.
+   Caption: Scan assistance you verify
 
-5. PartSnap or part-search workflow
-   - Show part identification/search assistance.
-   - If affiliate/search links are visible, make the convenience-link posture clear.
+5. PartSnap/search workflow with convenience-link posture.
+   Caption: Identify parts and search with care
 
-6. Service note/report
-   - Show a saved job note or report-style summary.
-   - Avoid exposing real customer info.
+6. Service note/report screen.
+   Caption: Write a clean service note
 
-## Do Not Capture
+## Avoid
 
-- Route Ready certificate screens unless certification verification is built.
-- Paid subscription or unlimited AI screens unless native IAP and entitlement checks are built.
-- Old PoolLens-only branding.
-- Manufacturer logos or language that implies official endorsement.
-- Customer names, addresses, phone numbers, or private job data.
-
-## Caption Direction
-
-Keep captions direct:
-
-- `Look up pool equipment codes`
-- `Run field service math`
-- `Use online scanner assistance`
-- `Write cleaner service notes`
-- `Keep common workflows nearby`
-
-Avoid:
-
-- `Guaranteed repairs`
-- `Certified training`
-- `Unlimited AI`
-- `Official manufacturer app`
+- Completed certificate claims.
+- Official manufacturer status.
+- Paid native subscription unlocks.
+- Unlimited AI scanning.
+- Guaranteed diagnosis, repair, or chemical safety.

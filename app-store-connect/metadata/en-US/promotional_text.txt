@@ -1,1 +1,1 @@
-Fast pool service field tools for error-code lookup, chemical math, job notes, and optional online AI scanning.
+Fast pool-service reference for the stop you are on: search error codes, calculate chemical doses, make service notes, and use optional AI scan assistance with field verification.

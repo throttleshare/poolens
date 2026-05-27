@@ -1,19 +1,7 @@
-SplashLens Field Tools is a free iOS wrapper around the SplashLens field PWA:
+SplashLens is a free utility/reference wrapper around the SplashLens PWA at https://app.splashlens.com/?store=ios.
 
-https://app.splashlens.com/?store=ios
+No account is required for core use. Manual lookup, calculators, notes, filters, and checklists work from the app shell after first load. Camera/photo access is user-initiated and only used for the optional AI scanner. Online AI scan features require internet access.
 
-Reviewer path:
+Store wrapper mode is intended to stay free-core and must not show direct Stripe checkout or web-subscription CTAs. AI scan output is assistance only and should be verified against equipment manuals, calibrated tests, label directions, and professional field judgment.
 
-1. Launch the app.
-2. Use the home screen quick actions.
-3. Open error-code lookup or calculator flows.
-4. Create or review a service note.
-5. Optional: open the scanner flow and select an image/camera input.
-
-No account is required for core use. Core reference tools are intended to work after the first load. Online AI scanner features require internet access and user-selected image input.
-
-Camera/photo access is requested only for user-initiated scanner features. Selected images may be sent to the server-side AI scanner for analysis. Results are assistance only and should be verified by the user.
-
-The initial App Store submission is a free-core build. Direct Stripe checkout and web-subscription CTAs should be hidden in iOS store-wrapper mode. Paid native subscriptions are not part of this submission unless an Apple In-App Purchase implementation is added separately.
-
-SplashLens is not affiliated with or endorsed by pool equipment manufacturers.
+This build does not include native paid entitlements, unlimited AI scanning, completed training certificates, manufacturer endorsement, or guaranteed diagnosis claims.
