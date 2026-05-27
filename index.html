@@ -96,6 +96,9 @@
     .rescue-chip { background: #ffffff; border: 1px solid #bae6fd; border-radius: 9px; padding: 8px 6px; text-align: center; }
     .rescue-chip strong { display: block; color: #0369a1; font-size: 14px; font-weight: 900; line-height: 1; }
     .rescue-chip span { display: block; color: #64748b; font-size: 10px; font-weight: 700; margin-top: 3px; }
+    .route-ready-card { background:#ffffff; border:1px solid #c7e5f3; border-left:4px solid #0284c7; border-radius:9px; padding:12px; margin-bottom:12px; box-shadow:var(--field-shadow-tight); }
+    .route-ready-card strong { display:block; color:#0f172a; font-size:14px; font-weight:900; margin-bottom:4px; }
+    .route-ready-card span { display:block; color:#64748b; font-size:12px; line-height:1.45; }
     @media (max-width: 360px) {
       .rescue-actions { grid-template-columns: 1fr; }
       .rescue-strip { grid-template-columns: 1fr 1fr; }
@@ -203,9 +206,9 @@
     <div id="tab-errors" class="tab-panel active" style="padding:14px;">
 
       <section class="rescue-hero">
-        <p class="rescue-kicker">Field rescue</p>
+        <p class="rescue-kicker">Field rescue - formerly PoolLens tools</p>
         <h1 class="rescue-title">Stuck at the equipment pad?</h1>
-        <p class="rescue-sub">Scan the display, search the code, calculate the dose, or write the service note. No account. Core tools are free.</p>
+        <p class="rescue-sub">SplashLens carries the PoolLens field toolkit forward: scan the display, search the code, calculate the dose, or write the service note. No account. Core tools are free.</p>
         <div class="rescue-actions">
           <button type="button" class="rescue-action primary" onclick="showTab('scan')">
             <strong>Scan Error Code</strong>
@@ -231,6 +234,11 @@
         <div class="rescue-chip"><strong>500+</strong><span>Error codes</span></div>
         <div class="rescue-chip"><strong>$0</strong><span>No card</span></div>
         <div class="rescue-chip"><strong>Offline</strong><span>Manual tools</span></div>
+      </div>
+
+      <div class="route-ready-card" aria-label="Route Ready service authority">
+        <strong>Route Ready service authority</strong>
+        <span>Use SplashLens at the stop today. Route Ready training remains a pilot layer until field usage proves the modules; PartSnap Pro is the paid web scanner upgrade for extended online scans.</span>
       </div>
 
       <div style="position:relative;margin-bottom:12px;">
