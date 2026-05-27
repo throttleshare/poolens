@@ -1,0 +1,13 @@
+SplashLens helps pool service technicians move faster in the field with practical reference tools in one place.
+
+Use SplashLens to look up equipment error codes, run service math, draft visit notes, follow pool-care checklists, and keep common field workflows close at hand. After the first load, core reference tools and notes are designed to stay available for field use.
+
+Optional online scanner tools can help review equipment displays, pool parts, and test-strip images. Scanner results are assistance only: verify results before taking action, follow product labels and manufacturer documentation, and use professional judgment.
+
+SplashLens is not affiliated with or endorsed by pool equipment manufacturers. Brand names may appear only as references for technician lookup and service context.
+
+Initial iOS release notes:
+- Free core utility tools.
+- No account required for core use.
+- Online AI scanner features require internet access.
+- Paid native subscriptions are not part of this initial store submission.
