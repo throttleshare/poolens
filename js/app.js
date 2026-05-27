@@ -2571,7 +2571,7 @@ function unlockPartSnapProLocal() {
   if (result) {
     result.innerHTML = `<div style="background:#052e16;border:1px solid #16a34a;border-radius:12px;padding:18px;text-align:center;">
       <p style="color:#86efac;font-size:15px;font-weight:900;margin-bottom:6px;">PartSnap Pro enabled on this device</p>
-      <p style="color:#bbf7d0;font-size:12px;line-height:1.5;">Unlimited AI scans are unlocked locally. If you use another phone, unlock it there after checkout too.</p>
+      <p style="color:#bbf7d0;font-size:12px;line-height:1.5;">Web scanner access is enabled locally on this device. Cross-device subscription sync is not built yet.</p>
     </div>`;
   }
 }
@@ -2595,13 +2595,13 @@ function showScanLimitModal(result, status) {
     result.innerHTML = `
       <div style="background:#1e293b;border:1px solid #7c3aed;border-radius:14px;padding:18px;margin:0 0 14px;text-align:center;border-left:4px solid #7c3aed;">
         <p style="color:#f1f5f9;font-size:19px;font-weight:900;margin-bottom:6px;">You've used ${usage.count} of ${SCAN_LIMIT_FREE} free AI scans this month.</p>
-        <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin-bottom:14px;">Manual code lookup, dosing, reports, filters, and checklists stay free. Upgrade PartSnap Pro for unlimited AI scanner use.</p>
+        <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin-bottom:14px;">Manual code lookup, dosing, reports, filters, and checklists stay free. Upgrade PartSnap Pro for extended web scanner access on this device.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
           <a href="${PARTSNAP_MONTHLY_LINK}" target="_blank" rel="noopener" onclick="trackSplashLensEvent('upgrade_click',{plan:'monthly'})" style="background:#0284c7;color:#fff;text-decoration:none;border-radius:10px;padding:12px 8px;font-size:13px;font-weight:900;">$4.99 / mo</a>
           <a href="${PARTSNAP_YEARLY_LINK}" target="_blank" rel="noopener" onclick="trackSplashLensEvent('upgrade_click',{plan:'yearly'})" style="background:#16a34a;color:#fff;text-decoration:none;border-radius:10px;padding:12px 8px;font-size:13px;font-weight:900;">$39 / yr</a>
         </div>
-        <button onclick="unlockPartSnapProLocal()" style="background:#334155;color:#cbd5e1;border:1px solid #475569;border-radius:10px;padding:11px 14px;font-size:12px;font-weight:800;cursor:pointer;width:100%;">I already upgraded - unlock this device</button>
-        <p style="color:#64748b;font-size:10px;line-height:1.4;margin-top:10px;">Launch note: checkout is live; device unlock keeps the season launch fast while account sync is built.</p>
+        <button onclick="unlockPartSnapProLocal()" style="background:#334155;color:#cbd5e1;border:1px solid #475569;border-radius:10px;padding:11px 14px;font-size:12px;font-weight:800;cursor:pointer;width:100%;">I already checked out - enable this device</button>
+        <p style="color:#64748b;font-size:10px;line-height:1.4;margin-top:10px;">Launch note: checkout is web-only and local to this device while account sync and server-side entitlement checks are built.</p>
       </div>`;
   }
 }
@@ -2638,7 +2638,7 @@ async function callAIScan(canvas, mode, result, status) {
     const res = await fetch('/api/scan', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ image: base64, mode }),
+      body:    JSON.stringify({ image: base64, mode, clientId: getScanClientId() }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { result: aiResult } = await res.json();
@@ -2707,6 +2707,22 @@ async function callAIScan(canvas, mode, result, status) {
   }
 }
 
+function getScanClientId() {
+  const key = 'splashlens-scan-client-id';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    if (crypto.randomUUID) {
+      id = crypto.randomUUID();
+    } else {
+      const bytes = new Uint32Array(4);
+      crypto.getRandomValues(bytes);
+      id = `scan-${Array.from(bytes, n => n.toString(16)).join('')}`;
+    }
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
 function renderPartsSnapResult(ai, result, status) {
   if (!result) return;
   const { manufacturer, category, component, model, partNumber, description, condition, replacementNotes, searchTerms, confidence } = ai;
@@ -2764,6 +2780,7 @@ function renderPartBuyLinks(searchTerms, partNumber, manufacturer, component) {
         <a href="https://www.amazon.com/s?k=${q}${tag}" target="_blank" rel="noopener" onclick="trackSplashLensEvent('affiliate_click',{store:'amazon'})" style="background:#f59e0b;color:#111827;text-decoration:none;text-align:center;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:900;">Amazon</a>
         <a href="https://www.google.com/search?q=${q}+pool+part" target="_blank" rel="noopener" onclick="trackSplashLensEvent('part_search_click',{store:'google'})" style="background:#0f172a;color:#7dd3fc;text-decoration:none;text-align:center;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:900;border:1px solid #334155;">Search Web</a>
       </div>
+      <p style="color:#64748b;font-size:10px;line-height:1.4;margin-top:8px;">Third-party search links are for convenience. If an affiliate tag is configured, SplashLens may earn a commission.</p>
     </div>`;
 }
 

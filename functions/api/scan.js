@@ -1,9 +1,35 @@
-// Cloudflare Pages Function — AI Scanner backend
+// Cloudflare Pages Function - AI Scanner backend
 // POST /api/scan
-// Body: { image: string (base64 JPEG), mode: 'error_code' | 'parts_snap' | 'test_strip' }
-// Env: ANTHROPIC_API_KEY (CF Pages secret)
+// Body: { image: string (base64 image), mode: 'error_code' | 'parts_snap' | 'test_strip' }
+// Required env: ANTHROPIC_API_KEY
+// Optional bindings: SCAN_RATE_LIMITER (Cloudflare Rate Limiting), SCAN_USAGE_KV (KV).
+// Production scanner traffic must have SCAN_USAGE_KV so anonymous monthly limits are server-enforced.
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const DEFAULT_ORIGIN = 'https://app.splashlens.com';
+const FREE_SCAN_LIMIT = 10;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BASE64_CHARS = Math.ceil(MAX_IMAGE_BYTES / 3) * 4;
+const LOCAL_FALLBACK_LIMIT = 4;
+const LOCAL_FALLBACK_WINDOW_MS = 60 * 60 * 1000;
+
+const ALLOWED_ORIGINS = new Set([
+  'https://app.splashlens.com',
+  'https://splashlens.com',
+  'https://www.splashlens.com',
+  'https://poolens.pages.dev',
+]);
+
+const DEV_ORIGINS = new Set([
+  'http://localhost:8788',
+  'http://localhost:8787',
+  'http://localhost:5173',
+  'http://127.0.0.1:8788',
+  'http://127.0.0.1:8787',
+  'http://127.0.0.1:5173',
+]);
+
+const localScanWindow = new Map();
 
 const PROMPTS = {
   error_code: `You are a pool equipment technician's assistant. Analyze this image of pool equipment and identify any error codes, fault codes, or error messages displayed.
@@ -77,39 +103,178 @@ Rules:
 - ch: Calcium Hardness in ppm (typical range 150-400, null if not visible)
 - cya: Cyanuric Acid / Stabilizer in ppm (typical range 20-100, null if not visible)
 - notes: 1-2 sentence plain-english summary of water state
-- confidence: low (strip reading is inherently imprecise — almost always use low or medium)
+- confidence: low (strip reading is inherently imprecise - almost always use low or medium)
 - disclaimer: always include the standard accuracy disclaimer
 
 If image is not a test strip: {"fc":null,"ph":null,"ta":null,"ch":null,"cya":null,"notes":"No test strip visible","confidence":"low","disclaimer":"Please photograph the test strip clearly"}`
 };
 
-export async function onRequestPost({ request, env }) {
-  // CORS
+function isProductionRequest(request, env) {
+  const host = new URL(request.url).hostname;
+  const configured = String(env.ENVIRONMENT || env.NODE_ENV || '').toLowerCase();
+  return configured === 'production' || host === 'app.splashlens.com' || host.endsWith('.pages.dev');
+}
+
+function isAllowedOrigin(origin, production) {
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  return !production && (origin === '' || DEV_ORIGINS.has(origin));
+}
+
+function corsHeaders(request, env) {
   const origin = request.headers.get('Origin') || '';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': (origin.includes('splashlens') || origin.includes('poolens')) ? origin : 'https://poolens.pages.dev',
+  const production = isProductionRequest(request, env);
+  const allowOrigin = isAllowedOrigin(origin, production) ? (origin || DEFAULT_ORIGIN) : DEFAULT_ORIGIN;
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
     'Content-Type': 'application/json',
   };
+}
+
+function json(data, status, headers) {
+  return new Response(JSON.stringify(data), { status, headers });
+}
+
+function getClientKey(request, body) {
+  const explicit = String(body.clientId || body.deviceId || '').trim().slice(0, 80);
+  if (explicit && /^[a-zA-Z0-9:_-]+$/.test(explicit)) return `client:${explicit}`;
+
+  const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+  const ua = request.headers.get('User-Agent') || 'unknown';
+  return `anon:${ip}:${ua.slice(0, 80)}`;
+}
+
+function monthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function secondsUntilNextMonth() {
+  const now = new Date();
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
+  return Math.max(60, Math.ceil((nextMonth.getTime() - now.getTime()) / 1000));
+}
+
+async function enforceRateLimit(request, env, headers, body) {
+  const key = getClientKey(request, body);
+  const limiter = env.SCAN_RATE_LIMITER || env.RATE_LIMITER;
+
+  if (limiter && typeof limiter.limit === 'function') {
+    const { success } = await limiter.limit({ key });
+    if (!success) {
+      return {
+        ok: false,
+        response: json({ error: 'Scan rate limit exceeded. Try again later.' }, 429, {
+          ...headers,
+          'Retry-After': '60',
+        }),
+      };
+    }
+  }
+
+  if (env.SCAN_USAGE_KV && typeof env.SCAN_USAGE_KV.get === 'function' && typeof env.SCAN_USAGE_KV.put === 'function') {
+    const usageKey = `scan:${monthKey()}:${key}`;
+    const current = Number(await env.SCAN_USAGE_KV.get(usageKey)) || 0;
+    if (current >= FREE_SCAN_LIMIT) {
+      return {
+        ok: false,
+        response: json({
+          error: 'Free scan limit reached for this month.',
+          limit: FREE_SCAN_LIMIT,
+          upgrade: '/api/checkout?plan=monthly',
+        }, 429, headers),
+      };
+    }
+    await env.SCAN_USAGE_KV.put(usageKey, String(current + 1), { expirationTtl: secondsUntilNextMonth() });
+    return { ok: true, usage: { count: current + 1, limit: FREE_SCAN_LIMIT, source: 'kv' } };
+  }
+
+  const production = isProductionRequest(request, env);
+  if (production) {
+    return {
+      ok: false,
+      response: json({ error: 'Server scan metering is not configured' }, 503, headers),
+    };
+  }
+
+  const now = Date.now();
+  const bucket = localScanWindow.get(key) || { count: 0, resetAt: now + LOCAL_FALLBACK_WINDOW_MS };
+  if (bucket.resetAt <= now) {
+    bucket.count = 0;
+    bucket.resetAt = now + LOCAL_FALLBACK_WINDOW_MS;
+  }
+  if (bucket.count >= LOCAL_FALLBACK_LIMIT) {
+    return {
+      ok: false,
+      response: json({ error: 'Local scan limit reached. Configure SCAN_USAGE_KV for production metering.' }, 429, headers),
+    };
+  }
+  bucket.count += 1;
+  localScanWindow.set(key, bucket);
+  return { ok: true, usage: { count: bucket.count, limit: LOCAL_FALLBACK_LIMIT, source: 'local' } };
+}
+
+function normalizeImage(image) {
+  if (typeof image !== 'string' || !image.trim()) {
+    return { error: 'No image provided' };
+  }
+
+  const dataUrl = image.match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
+  const mediaType = dataUrl ? dataUrl[1].toLowerCase().replace('image/jpg', 'image/jpeg') : 'image/jpeg';
+  const base64 = (dataUrl ? dataUrl[2] : image).replace(/\s/g, '');
+
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+    return { error: 'Image must be base64 encoded' };
+  }
+  if (base64.length > MAX_IMAGE_BASE64_CHARS) {
+    return { error: 'Image is too large. Upload a compressed image under 5 MB.' };
+  }
+
+  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+  const estimatedBytes = Math.floor((base64.length * 3) / 4) - padding;
+  if (estimatedBytes <= 0 || estimatedBytes > MAX_IMAGE_BYTES) {
+    return { error: 'Image is too large. Upload a compressed image under 5 MB.' };
+  }
+
+  return { base64, mediaType };
+}
+
+export async function onRequestPost({ request, env }) {
+  const headers = corsHeaders(request, env);
+  const origin = request.headers.get('Origin') || '';
+  const production = isProductionRequest(request, env);
+
+  if (!isAllowedOrigin(origin, production)) {
+    return json({ error: 'Origin not allowed' }, 403, headers);
+  }
+
+  const contentLength = Number(request.headers.get('Content-Length') || 0);
+  if (contentLength > MAX_IMAGE_BASE64_CHARS + 4096) {
+    return json({ error: 'Request is too large. Upload a compressed image under 5 MB.' }, 413, headers);
+  }
 
   if (!env.ANTHROPIC_API_KEY) {
-    return new Response(JSON.stringify({ error: 'AI scanner not configured', offline: true }), { status: 503, headers: corsHeaders });
+    return json({ error: 'AI scanner not configured' }, 503, headers);
   }
 
   let body;
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: corsHeaders });
+    return json({ error: 'Invalid request body' }, 400, headers);
   }
 
   const { image, mode = 'error_code' } = body;
-  if (!image) return new Response(JSON.stringify({ error: 'No image provided' }), { status: 400, headers: corsHeaders });
-  if (!PROMPTS[mode]) return new Response(JSON.stringify({ error: 'Unknown mode' }), { status: 400, headers: corsHeaders });
+  if (!PROMPTS[mode]) return json({ error: 'Unknown mode' }, 400, headers);
 
-  // Strip data URL prefix if present
-  const base64 = image.replace(/^data:image\/\w+;base64,/, '');
+  const normalized = normalizeImage(image);
+  if (normalized.error) return json({ error: normalized.error }, 400, headers);
+
+  const meter = await enforceRateLimit(request, env, headers, body);
+  if (!meter.ok) return meter.response;
 
   try {
     const apiRes = await fetch(CLAUDE_API, {
@@ -125,7 +290,7 @@ export async function onRequestPost({ request, env }) {
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+            { type: 'image', source: { type: 'base64', media_type: normalized.mediaType, data: normalized.base64 } },
             { type: 'text', text: PROMPTS[mode] }
           ]
         }]
@@ -135,37 +300,30 @@ export async function onRequestPost({ request, env }) {
     if (!apiRes.ok) {
       const err = await apiRes.text();
       console.error('Anthropic API error:', apiRes.status, err);
-      return new Response(JSON.stringify({ error: 'AI service error', status: apiRes.status }), { status: 502, headers: corsHeaders });
+      return json({ error: 'AI service error', status: apiRes.status }, 502, headers);
     }
 
     const data = await apiRes.json();
     const text = data.content?.[0]?.text || '';
 
-    // Extract JSON from response
     let parsed;
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
     } catch {
-      return new Response(JSON.stringify({ error: 'AI response parse failed', raw: text.slice(0, 200) }), { status: 502, headers: corsHeaders });
+      return json({ error: 'AI response parse failed', raw: text.slice(0, 200) }, 502, headers);
     }
 
-    return new Response(JSON.stringify({ ok: true, mode, result: parsed }), { status: 200, headers: corsHeaders });
-
+    return json({ ok: true, mode, result: parsed, usage: meter.usage }, 200, headers);
   } catch (err) {
     console.error('Scan worker error:', err);
-    return new Response(JSON.stringify({ error: 'Internal error', message: String(err) }), { status: 500, headers: corsHeaders });
+    return json({ error: 'Internal error' }, 500, headers);
   }
 }
 
-// Handle CORS preflight
-export async function onRequestOptions() {
+export async function onRequestOptions({ request, env }) {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
+    headers: corsHeaders(request, env)
   });
 }
