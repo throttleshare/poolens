@@ -15,6 +15,7 @@ This repo is the PoolLens source tree for the SplashLens field app.
 - `ENVIRONMENT=production`: recommended production variable.
 - `SPLASHLENS_ENTITLEMENT_SECRET`: required to verify signed scanner entitlement tokens.
 - `SPLASHLENS_ENTITLEMENT_ADMIN_SECRET`: required for `/api/scan-entitlement` admin issuance.
+- `STRIPE_SECRET_KEY`: required for `/api/checkout` to create Stripe Checkout Sessions and for `/api/checkout-success` to verify paid sessions before issuing scanner activation links.
 
 ## Required production metering
 
@@ -46,7 +47,14 @@ Recommended first pass:
 
 ## Stripe
 
-`functions/api/checkout.js` currently redirects to Stripe Payment Links. After a web checkout is confirmed, `/api/scan-entitlement` can issue a signed activation URL from the admin lane. The scanner sends that signed token to `/api/scan`, which verifies it server-side before granting the higher monthly scan quota.
+`functions/api/checkout.js` now creates Stripe Checkout Sessions when `STRIPE_SECRET_KEY` is present. The success URL lands on `/api/checkout-success?session_id={CHECKOUT_SESSION_ID}`, verifies the paid session with Stripe, signs a scanner entitlement token, stores the entitlement summary in `SCAN_USAGE_KV`, and sends the customer to SplashLens with the activation token.
+
+If `STRIPE_SECRET_KEY` is missing, `/api/checkout` falls back to the existing Stripe Payment Links so the public CTA does not break, but the customer activation path remains manual and revenue launch is not clean.
+
+Current Stripe catalog IDs:
+
+- Monthly PartSnap Pro: `price_1TbAp725fqLun6cVz5lhOiiS`
+- Annual PartSnap Pro: `price_1TbAp825fqLun6cVoVG0wqQl`
 
 Admin issuance shape:
 
