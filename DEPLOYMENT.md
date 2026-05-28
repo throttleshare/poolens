@@ -13,6 +13,8 @@ This repo is the PoolLens source tree for the SplashLens field app.
 
 - `ANTHROPIC_API_KEY`: required for `/api/scan`. Production fails closed when this is missing.
 - `ENVIRONMENT=production`: recommended production variable.
+- `SPLASHLENS_ENTITLEMENT_SECRET`: required to verify signed scanner entitlement tokens.
+- `SPLASHLENS_ENTITLEMENT_ADMIN_SECRET`: required for `/api/scan-entitlement` admin issuance.
 
 ## Required production metering
 
@@ -44,4 +46,13 @@ Recommended first pass:
 
 ## Stripe
 
-`functions/api/checkout.js` currently redirects to Stripe Payment Links. Before link rotation or real entitlement enforcement, move these links into Cloudflare env vars and add webhook/account validation. Store wrapper submissions must use free-core mode unless native billing is added.
+`functions/api/checkout.js` currently redirects to Stripe Payment Links. After a web checkout is confirmed, `/api/scan-entitlement` can issue a signed activation URL from the admin lane. The scanner sends that signed token to `/api/scan`, which verifies it server-side before granting the higher monthly scan quota.
+
+Admin issuance shape:
+
+```powershell
+$body = @{ email = "buyer@example.com"; plan = "SplashLens Scanner Pro"; ttlDays = 365 } | ConvertTo-Json -Compress
+Invoke-RestMethod -Method POST -Uri "https://app.splashlens.com/api/scan-entitlement" -Headers @{ "X-SplashLens-Admin-Secret" = $env:SPLASHLENS_ENTITLEMENT_ADMIN_SECRET } -ContentType "application/json" -Body $body
+```
+
+Store wrapper submissions must use free-core mode unless native billing is added.
