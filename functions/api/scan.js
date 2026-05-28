@@ -2,16 +2,19 @@
 // POST /api/scan
 // Body: { image: string (base64 image), mode: 'error_code' | 'parts_snap' | 'test_strip' }
 // Required env: ANTHROPIC_API_KEY
-// Optional bindings: SCAN_RATE_LIMITER (Cloudflare Rate Limiting), SCAN_USAGE_KV (KV).
-// Production scanner traffic must have SCAN_USAGE_KV so anonymous monthly limits are server-enforced.
+// Optional bindings/env: SCAN_RATE_LIMITER, SCAN_USAGE_KV, SPLASHLENS_ENTITLEMENT_SECRET.
+// Production scanner traffic must have SCAN_USAGE_KV so free and entitled monthly limits are server-enforced.
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_ORIGIN = 'https://app.splashlens.com';
 const FREE_SCAN_LIMIT = 10;
+const ENTITLED_SCAN_LIMIT = 500;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_BASE64_CHARS = Math.ceil(MAX_IMAGE_BYTES / 3) * 4;
 const LOCAL_FALLBACK_LIMIT = 4;
 const LOCAL_FALLBACK_WINDOW_MS = 60 * 60 * 1000;
+const ENTITLEMENT_TOKEN_PREFIX = 'sl_scan_v1';
+const textEncoder = new TextEncoder();
 
 const ALLOWED_ORIGINS = new Set([
   'https://app.splashlens.com',
@@ -148,6 +151,116 @@ function getClientKey(request, body) {
   return `anon:${ip}:${ua.slice(0, 80)}`;
 }
 
+function truthy(value) {
+  return /^(1|true|yes)$/i.test(String(value || '').trim());
+}
+
+function entitlementSecret(env) {
+  const secret = String(env.SPLASHLENS_ENTITLEMENT_SECRET || env.SCAN_ENTITLEMENT_SECRET || '').trim();
+  return secret.length >= 32 ? secret : '';
+}
+
+function entitlementTokenFromRequest(request, body) {
+  const headerToken = request.headers.get('x-splashlens-entitlement-token')?.trim();
+  if (headerToken) return headerToken;
+
+  const auth = request.headers.get('authorization')?.trim() || '';
+  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
+  if (bearer.startsWith(`${ENTITLEMENT_TOKEN_PREFIX}.`)) return bearer;
+
+  return typeof body.entitlementToken === 'string' ? body.entitlementToken.trim() : '';
+}
+
+async function verifyEntitlementToken(request, env, body) {
+  const token = entitlementTokenFromRequest(request, body);
+  if (!token) return { present: false, ok: false };
+
+  const secret = entitlementSecret(env);
+  if (!secret) {
+    return {
+      present: true,
+      ok: false,
+      status: 503,
+      error: 'Scan entitlement verification is not configured.',
+    };
+  }
+
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[0] !== ENTITLEMENT_TOKEN_PREFIX) {
+    return { present: true, ok: false, status: 401, error: 'Invalid scan entitlement token.' };
+  }
+
+  const signed = `${parts[0]}.${parts[1]}`;
+  const expected = await hmacSha256(secret, signed);
+  if (!constantTimeEqual(parts[2], expected)) {
+    return { present: true, ok: false, status: 401, error: 'Invalid scan entitlement token.' };
+  }
+
+  const payload = parseEntitlementPayload(parts[1]);
+  if (!payload || payload.exp <= Math.floor(Date.now() / 1000)) {
+    return { present: true, ok: false, status: 401, error: 'Scan entitlement token expired.' };
+  }
+
+  if (!scopeAllowed(payload.scopes, 'scan')) {
+    return { present: true, ok: false, status: 403, error: 'Scan entitlement does not include scanner access.' };
+  }
+
+  return {
+    present: true,
+    ok: true,
+    subject: String(payload.sub).slice(0, 120),
+    plan: String(payload.plan || 'SplashLens Premium').slice(0, 80),
+  };
+}
+
+function parseEntitlementPayload(value) {
+  try {
+    const decoded = JSON.parse(new TextDecoder().decode(base64UrlDecode(value)));
+    if (!decoded || typeof decoded !== 'object') return null;
+    if (typeof decoded.sub !== 'string' || typeof decoded.exp !== 'number') return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
+function scopeAllowed(scopes, requested) {
+  if (!scopes) return false;
+  if (scopes === 'all' || scopes === requested) return true;
+  return Array.isArray(scopes) && (scopes.includes('all') || scopes.includes(requested));
+}
+
+async function hmacSha256(secret, value) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    textEncoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, textEncoder.encode(value));
+  return base64UrlEncode(new Uint8Array(signature));
+}
+
+function base64UrlEncode(bytes) {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function base64UrlDecode(value) {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  const binary = atob(base64);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let index = 0; index < a.length; index += 1) diff |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  return diff === 0;
+}
+
 function monthKey() {
   return new Date().toISOString().slice(0, 7);
 }
@@ -158,8 +271,7 @@ function secondsUntilNextMonth() {
   return Math.max(60, Math.ceil((nextMonth.getTime() - now.getTime()) / 1000));
 }
 
-async function enforceRateLimit(request, env, headers, body) {
-  const key = getClientKey(request, body);
+async function enforceUsageQuota(request, env, headers, key, limit, source, upgradePath) {
   const limiter = env.SCAN_RATE_LIMITER || env.RATE_LIMITER;
 
   if (limiter && typeof limiter.limit === 'function') {
@@ -178,18 +290,20 @@ async function enforceRateLimit(request, env, headers, body) {
   if (env.SCAN_USAGE_KV && typeof env.SCAN_USAGE_KV.get === 'function' && typeof env.SCAN_USAGE_KV.put === 'function') {
     const usageKey = `scan:${monthKey()}:${key}`;
     const current = Number(await env.SCAN_USAGE_KV.get(usageKey)) || 0;
-    if (current >= FREE_SCAN_LIMIT) {
+    if (current >= limit) {
       return {
         ok: false,
         response: json({
-          error: 'Free scan limit reached for this month.',
-          limit: FREE_SCAN_LIMIT,
-          upgrade: '/api/checkout?plan=monthly',
+          error: source === 'entitlement'
+            ? 'Monthly scan entitlement limit reached.'
+            : 'Free scan limit reached for this month.',
+          limit,
+          upgrade: upgradePath,
         }, 429, headers),
       };
     }
     await env.SCAN_USAGE_KV.put(usageKey, String(current + 1), { expirationTtl: secondsUntilNextMonth() });
-    return { ok: true, usage: { count: current + 1, limit: FREE_SCAN_LIMIT, source: 'kv' } };
+    return { ok: true, usage: { count: current + 1, limit, source } };
   }
 
   const production = isProductionRequest(request, env);
@@ -215,6 +329,50 @@ async function enforceRateLimit(request, env, headers, body) {
   bucket.count += 1;
   localScanWindow.set(key, bucket);
   return { ok: true, usage: { count: bucket.count, limit: LOCAL_FALLBACK_LIMIT, source: 'local' } };
+}
+
+async function enforceScanAccess(request, env, headers, body) {
+  const entitlement = await verifyEntitlementToken(request, env, body);
+  if (entitlement.present) {
+    if (!entitlement.ok) {
+      return {
+        ok: false,
+        response: json({ error: entitlement.error }, entitlement.status || 401, headers),
+      };
+    }
+
+    const quota = await enforceUsageQuota(
+      request,
+      env,
+      headers,
+      `entitled:${entitlement.subject}`,
+      ENTITLED_SCAN_LIMIT,
+      'entitlement',
+      '/account',
+    );
+    if (!quota.ok) return quota;
+    return { ok: true, usage: { ...quota.usage, plan: entitlement.plan } };
+  }
+
+  if (truthy(env.SCAN_REQUIRE_ENTITLEMENT)) {
+    return {
+      ok: false,
+      response: json({
+        error: 'A signed SplashLens scan entitlement is required.',
+        upgrade: '/pricing',
+      }, 401, headers),
+    };
+  }
+
+  return enforceUsageQuota(
+    request,
+    env,
+    headers,
+    getClientKey(request, body),
+    FREE_SCAN_LIMIT,
+    'free_metered',
+    '/api/checkout?plan=monthly',
+  );
 }
 
 function normalizeImage(image) {
@@ -273,7 +431,7 @@ export async function onRequestPost({ request, env }) {
   const normalized = normalizeImage(image);
   if (normalized.error) return json({ error: normalized.error }, 400, headers);
 
-  const meter = await enforceRateLimit(request, env, headers, body);
+  const meter = await enforceScanAccess(request, env, headers, body);
   if (!meter.ok) return meter.response;
 
   try {
