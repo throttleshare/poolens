@@ -25,9 +25,21 @@
 ## Web Verification
 
 - `https://app.splashlens.com/manifest.json` includes PNG and maskable icons.
-- `https://app.splashlens.com/.well-known/assetlinks.json` returns the upload-key asset link.
+- `https://app.splashlens.com/.well-known/assetlinks.json` returns both the Play app-signing and upload-key fingerprints.
 - Mobile browser smoke for `https://app.splashlens.com/?store=android` passed with no console/page errors and no horizontal overflow.
 
 ## Play Console Note
 
-Upload this signed AAB first. If Google Play App Signing assigns a different App Signing certificate, add that SHA-256 fingerprint to `.well-known/assetlinks.json` alongside the upload-key fingerprint and redeploy with `tools/deploy-poolens-web.ps1`.
+Play Console execution completed on 2026-05-28:
+
+- App: `SplashLens Field Tools`.
+- Package: `com.splashlens.app`.
+- App ID: `4974408849765183344`.
+- Internal testing release: `1 (1)`.
+- Track URL: `https://play.google.com/console/u/0/developers/6282350079091140184/app/4974408849765183344/tracks/4701681232437528783?tab=releases`.
+- Internal tester list: `Internal testers` with 1 user.
+- Track status after tester save: `Active`.
+- Google Play App Signing SHA-256: `A0:72:04:3D:00:60:69:48:55:CC:2B:01:95:DA:D8:9B:76:D7:52:F7:BB:C5:B8:7D:80:FB:DF:61:B4:F9:23:1F`.
+- Live `https://app.splashlens.com/.well-known/assetlinks.json` now includes both the Google app-signing key and upload-key SHA-256 fingerprints.
+
+Production is still gated by Google Play's closed-testing requirement for this account: at least 12 opted-in testers for at least 14 days before applying for production access.

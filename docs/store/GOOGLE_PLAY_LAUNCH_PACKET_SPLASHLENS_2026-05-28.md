@@ -13,6 +13,20 @@ Scope: Google Play launch packet for the current SplashLens pool-service field a
 - Current product promise: free-core field reference app for pool service technicians. Search equipment error codes, calculate chemical doses, create service notes, use filter/checklist references, and optionally use online scanner workflows for displays, parts, and test strips.
 - Important legacy warning: `github-projects/splashlens` contains an older Unity AR pool-visualizer/dealer-sales concept. Do not use that AR/dealer copy, screenshots, or build lane for the current pool-tech PWA/scanner Play launch.
 
+## Play Console Execution Update - 2026-05-28
+
+- Google Play Console app created: `SplashLens Field Tools`.
+- Play Console app ID: `4974408849765183344`.
+- Package: `com.splashlens.app`.
+- Internal testing track: `https://play.google.com/console/u/0/developers/6282350079091140184/app/4974408849765183344/tracks/4701681232437528783?tab=releases`.
+- Published internal release: `1 (1)`.
+- Internal tester list attached: `Internal testers` with 1 user.
+- Track status after tester save: `Active`.
+- Production access is not directly submittable yet because Google requires a closed test with at least 12 opted-in testers for 14 days before production application on this account.
+- App signing key SHA-256 from Play Console: `A0:72:04:3D:00:60:69:48:55:CC:2B:01:95:DA:D8:9B:76:D7:52:F7:BB:C5:B8:7D:80:FB:DF:61:B4:F9:23:1F`.
+- Upload key SHA-256: `9F:B4:69:CF:41:91:74:BF:76:21:32:34:AF:7A:53:0D:75:02:58:0A:33:77:C9:D8:91:71:E4:E9:4B:17:2E:96`.
+- Live asset links now include both fingerprints at `https://app.splashlens.com/.well-known/assetlinks.json`.
+
 ## Android Package And Artifact Status
 
 Package/app ID status:
@@ -31,10 +45,10 @@ Artifact verification:
 - Signed Play upload candidate: `play-store-artifacts/SplashLens-Field-Tools-1.0.0-v1-signed.aab`.
 - Upload key is intentionally stored outside Git at `C:\Users\sales\.keystores\splashlens\splashlens-upload.keystore`.
 - Upload-key SHA-256 fingerprint: `9F:B4:69:CF:41:91:74:BF:76:21:32:34:AF:7A:53:0D:75:02:58:0A:33:77:C9:D8:91:71:E4:E9:4B:17:2E:96`.
-- Web asset link file added at `.well-known/assetlinks.json` for the upload-key fingerprint.
+- Web asset link file added at `.well-known/assetlinks.json` for both the Play app-signing and upload-key fingerprints.
 - PWA manifest now includes PNG 192, PNG 512, and maskable 512 icons.
 
-Launch verdict: Play metadata and a signed AAB are now ready for Play Console creation/upload. After Play Console enables Google Play App Signing, add Google's App Signing certificate SHA-256 to `.well-known/assetlinks.json` alongside the upload key and redeploy before production rollout.
+Launch verdict: Play metadata and a signed AAB have been used to create and publish the internal testing release. Google Play App Signing assigned the app-signing certificate, and `.well-known/assetlinks.json` has been updated and deployed with both the app-signing and upload-key fingerprints.
 
 ## Play Store Metadata
 
@@ -179,7 +193,7 @@ The scanner is reference assistance, not a diagnosis engine. It can help identif
    - Data safety: use the draft above, then adjust based on the actual wrapper and scanner/analytics behavior.
 8. Add store listing metadata from this packet.
 9. Upload screenshots and feature graphic from the creative direction above.
-10. Upload the signed `.aab` to internal testing first.
+10. Upload the signed `.aab` to internal testing first. Completed on 2026-05-28.
 11. Smoke-test the internal build:
     - Opens directly into SplashLens, not old PoolLens branding.
     - Starts at or preserves `?store=android`.
@@ -188,12 +202,13 @@ The scanner is reference assistance, not a diagnosis engine. It can help identif
     - Camera/photo permission is requested only when the user starts scanner flow.
     - Scanner language says assistance/verify, not guaranteed diagnosis.
     - Privacy/support links open correctly.
-12. Promote to production with manual publishing after internal test passes.
+12. Promote to production only after the required 12-tester / 14-day closed test unlocks production access and internal/closed smoke testing passes.
 
 ## Final Blockers
 
-- Current-field-app Android/TWA source is missing.
-- Current-field-app signed `.aab` is missing.
+- Current-field-app Android/TWA source exists under `android-twa`.
+- Current-field-app signed `.aab` exists and has been uploaded to internal testing.
 - Final Play data-safety answers must wait until the Android wrapper and any native SDKs are known.
 - Store screenshots/feature graphic still need to be captured from the current `?store=android` app mode.
 - Do not use the legacy Unity AR app, AR screenshots, AR store copy, or dealer-sales positioning for this Google Play launch.
+- Production release remains gated by Google closed-testing policy for this Play account.
