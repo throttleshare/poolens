@@ -25,16 +25,16 @@ Package/app ID status:
 
 Artifact verification:
 
-- No current SplashLens field-app Android source project was found under `poolens`.
-- No `.aab` or `.apk` was found under `poolens` or `splashlens`.
-- Legacy Unity AR Android build scripts exist under `splashlens/app/Build-Scripts`, but they target the historical AR/dealer app and are not aligned with the current SplashLens pool-tech field app promise.
+- Current field-app Android/TWA wrapper now exists under `android-twa`.
+- Release bundle build passed on Windows with `cmd /c gradlew.bat bundleRelease`.
+- Unsigned build output: `android-twa/app/build/outputs/bundle/release/app-release.aab`.
+- Signed Play upload candidate: `play-store-artifacts/SplashLens-Field-Tools-1.0.0-v1-signed.aab`.
+- Upload key is intentionally stored outside Git at `C:\Users\sales\.keystores\splashlens\splashlens-upload.keystore`.
+- Upload-key SHA-256 fingerprint: `9F:B4:69:CF:41:91:74:BF:76:21:32:34:AF:7A:53:0D:75:02:58:0A:33:77:C9:D8:91:71:E4:E9:4B:17:2E:96`.
+- Web asset link file added at `.well-known/assetlinks.json` for the upload-key fingerprint.
+- PWA manifest now includes PNG 192, PNG 512, and maskable 512 icons.
 
-Exact missing build artifact:
-
-- A Play-ready signed Android App Bundle generated from a TWA/Android wrapper around `https://app.splashlens.com/?store=android`.
-- Expected output path once created, for example: `poolens/android/app/build/outputs/bundle/release/splashlens-field-tools-release.aab` or `poolens/play-store-artifacts/SplashLens-Field-Tools-1.0.0.aab`.
-
-Launch verdict: metadata packet can be prepared now, but Play upload is blocked until a current-field-app TWA/Android wrapper exists and produces a signed `.aab`.
+Launch verdict: Play metadata and a signed AAB are now ready for Play Console creation/upload. After Play Console enables Google Play App Signing, add Google's App Signing certificate SHA-256 to `.well-known/assetlinks.json` alongside the upload key and redeploy before production rollout.
 
 ## Play Store Metadata
 
@@ -197,4 +197,3 @@ The scanner is reference assistance, not a diagnosis engine. It can help identif
 - Final Play data-safety answers must wait until the Android wrapper and any native SDKs are known.
 - Store screenshots/feature graphic still need to be captured from the current `?store=android` app mode.
 - Do not use the legacy Unity AR app, AR screenshots, AR store copy, or dealer-sales positioning for this Google Play launch.
-
