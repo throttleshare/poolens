@@ -8,7 +8,7 @@ Scope: Google Play launch packet for the current SplashLens pool-service field a
 - Public site repo: `github-projects/poolens-site`
 - Current app URL for Play wrapper: `https://app.splashlens.com/?store=android`
 - Marketing URL: `https://splashlens.com`
-- Privacy URL: `https://app.splashlens.com/privacy.html`
+- Privacy URL: `https://app.splashlens.com/privacy`
 - Support URL: `https://app.splashlens.com`
 - Current product promise: free-core field reference app for pool service technicians. Search equipment error codes, calculate chemical doses, create service notes, use filter/checklist references, and optionally use online scanner workflows for displays, parts, and test strips.
 - Important legacy warning: `github-projects/splashlens` contains an older Unity AR pool-visualizer/dealer-sales concept. Do not use that AR/dealer copy, screenshots, or build lane for the current pool-tech PWA/scanner Play launch.
@@ -117,7 +117,7 @@ Submitted Play Console data-safety posture for the Android production release:
 - Email address: collected optionally for app functionality and developer communications.
 - Photos/images: collected optionally for app functionality and shared for app functionality when the user starts an online scanner workflow.
 - Security: app traffic should use HTTPS/TLS.
-- Deletion request URL: `https://app.splashlens.com/data-deletion.html`.
+- Deletion request URL: `https://app.splashlens.com/data-deletion`.
 
 ## Screenshot And Thumbnail Direction
 
