@@ -24,6 +24,17 @@
 - `https://app.splashlens.com/privacy.html` redirects to `/privacy` and now resolves to the same policy content.
 - Play Console should use privacy policy URL: `https://app.splashlens.com/privacy`.
 
+## 2026-05-29 Resubmission
+
+- Logged into the correct ThrottleShare Google Play developer lane: developer ID `7017771963942604688`, app ID `4974110437390812521`.
+- Updated the App content privacy policy declaration from `https://app.splashlens.com/privacy.html` to `https://app.splashlens.com/privacy`.
+- Saved the declaration and sent all pending changes for review from Publishing overview.
+- Play Console showed `Changes in review`; after the quick-check pass, the page showed `Your changes are now in review`.
+- Evidence screenshots were saved in the working root:
+  - `play-console-after-save.png`
+  - `play-console-after-submit.png`
+  - `play-console-after-submit-90s.png`
+
 ## Superseded Personal-Account App
 
 The earlier personal-account app under `warmsnowman831` used package `com.splashlens.app`. That package is locked to the wrong developer account and should not be used for the ThrottleShare launch lane.
