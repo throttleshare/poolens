@@ -16,6 +16,14 @@
 - Current asset links: `.well-known/assetlinks.json` includes the upload-key fingerprint for `com.splashlens.fieldtools`.
 - Follow-up after Play review/signing: add the Google Play App Signing SHA-256 for `com.splashlens.fieldtools` to `https://app.splashlens.com/.well-known/assetlinks.json` once Google assigns it.
 
+## Privacy Policy Rejection Fix
+
+- Google rejected the first review because `https://app.splashlens.com/privacy.html` was resolving to the app shell instead of a standalone privacy policy.
+- Fixed in Git commit `7a97654`: added `privacy.html`, added `data-deletion.html`, and updated the Play launch packet to use the direct `200 OK` policy URL.
+- Production Cloudflare Pages deployment `8eb0c0f4-f07e-4657-87f7-badd4304c98b` now serves `https://app.splashlens.com/privacy` as a standalone policy page.
+- `https://app.splashlens.com/privacy.html` redirects to `/privacy` and now resolves to the same policy content.
+- Play Console should use privacy policy URL: `https://app.splashlens.com/privacy`.
+
 ## Superseded Personal-Account App
 
 The earlier personal-account app under `warmsnowman831` used package `com.splashlens.app`. That package is locked to the wrong developer account and should not be used for the ThrottleShare launch lane.
