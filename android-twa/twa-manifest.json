@@ -1,5 +1,5 @@
 {
-  "packageId": "com.splashlens.app",
+  "packageId": "com.splashlens.fieldtools",
   "host": "app.splashlens.com",
   "name": "SplashLens",
   "launcherName": "SplashLens",
@@ -17,7 +17,7 @@
   "maskableIconUrl": "https://app.splashlens.com/icons/maskable-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "C:\\Users\\sales\\Documents\\Codex\\2026-05-26\\can-you-research-github-and-scrape\\github-projects\\poolens\\android-twa\\splashlens-upload.keystore",
+    "path": "C:\\Users\\sales\\.keystores\\splashlens\\splashlens-upload.keystore",
     "alias": "splashlens_upload"
   },
   "appVersionName": "1",

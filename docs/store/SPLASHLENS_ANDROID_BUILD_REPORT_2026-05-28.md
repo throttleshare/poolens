@@ -3,15 +3,15 @@
 ## Result
 
 - Android TWA wrapper created under `android-twa`.
-- Package ID: `com.splashlens.app`.
+- Package ID: `com.splashlens.fieldtools`.
 - Start URL: `https://app.splashlens.com/?store=android`.
 - PWA manifest upgraded with PNG 192, PNG 512, and maskable 512 icons.
 - Release bundle build passed on Windows:
   - Command: `cmd /c gradlew.bat bundleRelease`
   - Output: `android-twa/app/build/outputs/bundle/release/app-release.aab`
 - Signed Play upload candidate created:
-  - `play-store-artifacts/SplashLens-Field-Tools-1.0.0-v1-signed.aab`
-  - Size: 1,389,053 bytes at build time.
+  - `play-store-artifacts/SplashLens-Field-Tools-1.0.0-v1-com.splashlens.fieldtools-signed.aab`
+  - Size: 1,389,029 bytes at build time.
 
 ## Signing
 
@@ -25,7 +25,7 @@
 ## Web Verification
 
 - `https://app.splashlens.com/manifest.json` includes PNG and maskable icons.
-- `https://app.splashlens.com/.well-known/assetlinks.json` returns both the Play app-signing and upload-key fingerprints.
+- `.well-known/assetlinks.json` includes the upload-key fingerprint for `com.splashlens.fieldtools`.
 - Mobile browser smoke for `https://app.splashlens.com/?store=android` passed with no console/page errors and no horizontal overflow.
 
 ## Play Console Note
@@ -33,13 +33,14 @@
 Play Console execution completed on 2026-05-28:
 
 - App: `SplashLens Field Tools`.
-- Package: `com.splashlens.app`.
-- App ID: `4974408849765183344`.
-- Internal testing release: `1 (1)`.
-- Track URL: `https://play.google.com/console/u/0/developers/6282350079091140184/app/4974408849765183344/tracks/4701681232437528783?tab=releases`.
-- Internal tester list: `Internal testers` with 1 user.
-- Track status after tester save: `Active`.
-- Google Play App Signing SHA-256: `A0:72:04:3D:00:60:69:48:55:CC:2B:01:95:DA:D8:9B:76:D7:52:F7:BB:C5:B8:7D:80:FB:DF:61:B4:F9:23:1F`.
-- Live `https://app.splashlens.com/.well-known/assetlinks.json` now includes both the Google app-signing key and upload-key SHA-256 fingerprints.
+- Correct developer account: `ThrottleShare`.
+- Correct developer account ID: `7017771963942604688`.
+- Package: `com.splashlens.fieldtools`.
+- App ID: `4974110437390812521`.
+- Production release: `1.0.0 Android launch`, version `1 (1)`.
+- Track URL: `https://play.google.com/console/u/2/developers/7017771963942604688/app/4974110437390812521/tracks/4697669214915845586`.
+- Publishing status observed after submission: `Changes in review`.
 
-Production is still gated by Google Play's closed-testing requirement for this account: at least 12 opted-in testers for at least 14 days before applying for production access.
+The old `com.splashlens.app` Play record is on the wrong personal account and is not the launch lane. The ThrottleShare production release uses the new package `com.splashlens.fieldtools`.
+
+Follow-up: when Google Play App Signing assigns the production app-signing SHA-256 for `com.splashlens.fieldtools`, add that fingerprint to `https://app.splashlens.com/.well-known/assetlinks.json` and redeploy the site.

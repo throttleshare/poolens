@@ -8,47 +8,46 @@ Scope: Google Play launch packet for the current SplashLens pool-service field a
 - Public site repo: `github-projects/poolens-site`
 - Current app URL for Play wrapper: `https://app.splashlens.com/?store=android`
 - Marketing URL: `https://splashlens.com`
-- Privacy URL: `https://splashlens.com/privacy.html`
-- Support URL: `https://splashlens.com`
+- Privacy URL: `https://app.splashlens.com/privacy.html`
+- Support URL: `https://app.splashlens.com`
 - Current product promise: free-core field reference app for pool service technicians. Search equipment error codes, calculate chemical doses, create service notes, use filter/checklist references, and optionally use online scanner workflows for displays, parts, and test strips.
 - Important legacy warning: `github-projects/splashlens` contains an older Unity AR pool-visualizer/dealer-sales concept. Do not use that AR/dealer copy, screenshots, or build lane for the current pool-tech PWA/scanner Play launch.
 
 ## Play Console Execution Update - 2026-05-28
 
+- Correct Google Play developer account: `ThrottleShare`.
+- Correct developer account ID: `7017771963942604688`.
 - Google Play Console app created: `SplashLens Field Tools`.
-- Play Console app ID: `4974408849765183344`.
-- Package: `com.splashlens.app`.
-- Internal testing track: `https://play.google.com/console/u/0/developers/6282350079091140184/app/4974408849765183344/tracks/4701681232437528783?tab=releases`.
-- Published internal release: `1 (1)`.
-- Internal tester list attached: `Internal testers` with 1 user.
-- Track status after tester save: `Active`.
-- Production access is not directly submittable yet because Google requires a closed test with at least 12 opted-in testers for 14 days before production application on this account.
-- App signing key SHA-256 from Play Console: `A0:72:04:3D:00:60:69:48:55:CC:2B:01:95:DA:D8:9B:76:D7:52:F7:BB:C5:B8:7D:80:FB:DF:61:B4:F9:23:1F`.
+- Play Console app ID: `4974110437390812521`.
+- Package: `com.splashlens.fieldtools`.
+- Production track: `https://play.google.com/console/u/2/developers/7017771963942604688/app/4974110437390812521/tracks/4697669214915845586`.
+- Production release: `1.0.0 Android launch`, version `1 (1)`.
+- Publishing overview status observed after confirmation: `Changes in review`.
 - Upload key SHA-256: `9F:B4:69:CF:41:91:74:BF:76:21:32:34:AF:7A:53:0D:75:02:58:0A:33:77:C9:D8:91:71:E4:E9:4B:17:2E:96`.
-- Live asset links now include both fingerprints at `https://app.splashlens.com/.well-known/assetlinks.json`.
+- `.well-known/assetlinks.json` now includes the upload-key fingerprint for `com.splashlens.fieldtools`.
+- Follow-up: add the Google Play App Signing SHA-256 for `com.splashlens.fieldtools` to `https://app.splashlens.com/.well-known/assetlinks.json` after Google assigns it.
 
 ## Android Package And Artifact Status
 
 Package/app ID status:
 
-- Current field-app Android package ID: not discoverable from an active Android/TWA source project in `poolens`.
+- Current field-app Android package ID: `com.splashlens.fieldtools`.
 - Apple/iOS bundle ID already used in ASC: `com.splashlens.app`.
 - Legacy Unity AR Android identifier in `splashlens/app/ProjectSettings/ProjectSettings.asset`: `com.splashlens.app`.
-- Recommended Play package if creating a new current-field-app TWA and the package is available/owned in Play Console: `com.splashlens.app`.
-- Alternative only if the owner wants a new Below Zero Media namespace and can create/own the Play app record: `com.belowzeromedia.splashlens`.
+- The old `com.splashlens.app` Play package is locked to the wrong personal Google Play developer account. Do not use it for the ThrottleShare launch lane.
 
 Artifact verification:
 
 - Current field-app Android/TWA wrapper now exists under `android-twa`.
 - Release bundle build passed on Windows with `cmd /c gradlew.bat bundleRelease`.
 - Unsigned build output: `android-twa/app/build/outputs/bundle/release/app-release.aab`.
-- Signed Play upload candidate: `play-store-artifacts/SplashLens-Field-Tools-1.0.0-v1-signed.aab`.
+- Signed Play upload candidate: `play-store-artifacts/SplashLens-Field-Tools-1.0.0-v1-com.splashlens.fieldtools-signed.aab`.
 - Upload key is intentionally stored outside Git at `C:\Users\sales\.keystores\splashlens\splashlens-upload.keystore`.
 - Upload-key SHA-256 fingerprint: `9F:B4:69:CF:41:91:74:BF:76:21:32:34:AF:7A:53:0D:75:02:58:0A:33:77:C9:D8:91:71:E4:E9:4B:17:2E:96`.
-- Web asset link file added at `.well-known/assetlinks.json` for both the Play app-signing and upload-key fingerprints.
+- Web asset link file updated at `.well-known/assetlinks.json` for the new package and upload-key fingerprint.
 - PWA manifest now includes PNG 192, PNG 512, and maskable 512 icons.
 
-Launch verdict: Play metadata and a signed AAB have been used to create and publish the internal testing release. Google Play App Signing assigned the app-signing certificate, and `.well-known/assetlinks.json` has been updated and deployed with both the app-signing and upload-key fingerprints.
+Launch verdict: Play metadata and a signed AAB have been submitted to production review on the correct ThrottleShare developer account. Google Play approval and the final app-signing asset-links update remain external follow-ups.
 
 ## Play Store Metadata
 
@@ -106,9 +105,7 @@ Avoid these claims until the app actually supports them in the submitted native 
 
 ## Data Safety Notes
 
-Use these as the Play Console data safety draft, then finalize only after the actual Android wrapper and any native SDKs are known.
-
-Likely declarations for the current free-core TWA wrapper:
+Submitted Play Console data-safety posture for the Android production release:
 
 - Account creation: not required for core use.
 - Ads: no.
@@ -117,19 +114,10 @@ Likely declarations for the current free-core TWA wrapper:
 - Health/financial data: no.
 - Payment information: no payment data collected inside the initial Play wrapper. If any checkout is exposed inside the app, pause and route through Play Billing or an approved policy flow.
 - Local app data: service notes, saved pool/reference data, usage state, and preferences may be stored locally in app/browser storage for app functionality.
-- Photos/images: user-selected images may be uploaded only when the user starts an online scanner workflow. Purpose: app functionality, not advertising.
-- Text/user content: scanner prompts, manual entries, notes, or readings may be processed for app functionality if submitted through an online workflow.
-- Diagnostics/app activity: declare only if the Android wrapper adds analytics, crash reporting, or logging SDKs. If no native SDKs are added, verify whether the web app logs requests through Cloudflare or scanner endpoints before finalizing.
-- Data sharing: do not claim zero sharing until the scanner endpoint, AI provider processing, hosting logs, and any analytics/crash SDKs are verified.
+- Email address: collected optionally for app functionality and developer communications.
+- Photos/images: collected optionally for app functionality and shared for app functionality when the user starts an online scanner workflow.
 - Security: app traffic should use HTTPS/TLS.
-- Deletion: users can clear local app data from Android settings/browser storage and can contact support through the public support/privacy URL.
-
-Open data-safety checks before submission:
-
-- Confirm whether the scanner endpoint retains uploaded images or only processes transiently.
-- Confirm whether `SCAN_USAGE_KV`, scanner logs, Cloudflare logs, or AI provider logs store image/text/request metadata.
-- Confirm whether the TWA adds Firebase, Play Integrity, crash reporting, analytics, or notification SDKs.
-- Confirm `?store=android` hides Stripe/payment CTAs and does not expose web subscription purchase screens inside the Play build.
+- Deletion request URL: `https://app.splashlens.com/data-deletion.html`.
 
 ## Screenshot And Thumbnail Direction
 
@@ -176,39 +164,22 @@ The scanner is reference assistance, not a diagnosis engine. It can help identif
 
 ## Manual Play Console Steps
 
-1. Build a current SplashLens TWA/Android wrapper around `https://app.splashlens.com/?store=android`.
-2. Choose the Play package ID. Use `com.splashlens.app` only if the Play Console account owns or can create it for this current app.
-3. Set app name to `SplashLens Field Tools`, category to Utilities or Productivity, and pricing to Free.
-4. Generate a signed release `.aab` with Play App Signing enabled.
-5. Verify the bundle locally before upload:
-   - `jarsigner -verify -verbose -certs <path-to-aab>`
-   - `bundletool validate --bundle <path-to-aab>` if bundletool is available.
-6. Create or open the Google Play Console app record.
-7. Complete App content:
-   - Privacy policy: `https://splashlens.com/privacy.html`
-   - Ads: No
-   - App access: no login required for core use
-   - Target audience: adults/professionals, not children
-   - Content rating: utility/reference, no social/user-generated public sharing
-   - Data safety: use the draft above, then adjust based on the actual wrapper and scanner/analytics behavior.
-8. Add store listing metadata from this packet.
-9. Upload screenshots and feature graphic from the creative direction above.
-10. Upload the signed `.aab` to internal testing first. Completed on 2026-05-28.
-11. Smoke-test the internal build:
-    - Opens directly into SplashLens, not old PoolLens branding.
-    - Starts at or preserves `?store=android`.
-    - No direct Stripe checkout or web subscription CTA appears in store mode.
-    - Manual lookup, calculators, notes, filters, and checklists work after first load.
-    - Camera/photo permission is requested only when the user starts scanner flow.
-    - Scanner language says assistance/verify, not guaranteed diagnosis.
-    - Privacy/support links open correctly.
-12. Promote to production only after the required 12-tester / 14-day closed test unlocks production access and internal/closed smoke testing passes.
+1. Monitor Google Play review under the ThrottleShare account.
+2. After Google assigns the `com.splashlens.fieldtools` app-signing SHA-256, update `https://app.splashlens.com/.well-known/assetlinks.json`.
+3. Smoke-test the approved Play listing/build:
+   - Opens directly into SplashLens, not old PoolLens branding.
+   - Starts at or preserves `?store=android`.
+   - No direct Stripe checkout or web subscription CTA appears in store mode.
+   - Manual lookup, calculators, notes, filters, and checklists work after first load.
+   - Camera/photo permission is requested only when the user starts scanner flow.
+   - Scanner language says assistance/verify, not guaranteed diagnosis.
+   - Privacy/support links open correctly.
 
 ## Final Blockers
 
 - Current-field-app Android/TWA source exists under `android-twa`.
-- Current-field-app signed `.aab` exists and has been uploaded to internal testing.
-- Final Play data-safety answers must wait until the Android wrapper and any native SDKs are known.
-- Store screenshots/feature graphic still need to be captured from the current `?store=android` app mode.
+- Current-field-app signed `.aab` exists and has been uploaded to production review.
+- Play data-safety answers have been submitted with conservative scanner/photo disclosure.
+- Temporary submission-grade screenshots and feature graphic were uploaded. Replace with premium real-photo creative in the next ASO pass.
 - Do not use the legacy Unity AR app, AR screenshots, AR store copy, or dealer-sales positioning for this Google Play launch.
-- Production release remains gated by Google closed-testing policy for this Play account.
+- Production release is now in Google review from the correct ThrottleShare account.
